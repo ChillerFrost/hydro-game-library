@@ -192,25 +192,41 @@
   function splitView() {
     const items = filtered('title');
     const sel = items.find(e => e._id === S.selectedId) || items[0];
-    const row = e => `<button class="row${e.installed ? ' inst' : ''}${sel && e._id === sel._id ? ' sel' : ''}" data-act="select" data-id="${e._id}"${sel && e._id === sel._id ? ' aria-current="true"' : ''}>
+    const isClosed = key => prefs.collapsed.includes(key);
+
+    // Sections in sidebar order. A game can sit in several; only one copy gets highlighted.
+    const sections = [
+      ...(items.some(e => e.favorite) ? [{ key: 'fav', rows: items.filter(e => e.favorite) }] : []),
+      ...S.collections.map(c => ({ key: c._id, col: c, rows: inCol(c, items) })),
+      { key: 'all', rows: items },
+    ];
+    const showing = sections.filter(x => !isClosed(x.key) && sel && x.rows.some(e => e._id === sel._id)).map(x => x.key);
+    const hiKey = showing.includes(S.selFrom) ? S.selFrom : showing[0]; // where it was clicked, else first visible
+
+    const row = (e, key) => {
+      const on = sel && e._id === sel._id && key === hiKey;
+      return `<button class="row${e.installed ? ' inst' : ''}${on ? ' sel' : ''}" data-act="select" data-id="${e._id}" data-v="${key}"${on ? ' aria-current="true"' : ''}>
         <div class="row-cover" style="background:${art.cover(e.game)}"></div><div class="row-name">${esc(e.game.title)}</div><div class="dot${e.installed ? ' on' : ''}"></div></button>`;
-    const favs = items.filter(e => e.favorite);
-    const colSection = c => {
-      const closed = prefs.collapsed.includes(c._id), rows = inCol(c, items);
-      return `<button class="col-head${closed ? ' closed' : ''}" data-act="toggle-col" data-id="${c._id}" aria-expanded="${!closed}"><div class="caret"></div><span class="col-name">${esc(c.name)}</span><span>${inCol(c).length}</span></button>
-        ${closed ? '' : rows.map(row).join('') || `<div class="col-empty">${c.games.length ? 'No games match.' : `Empty · <button class="link" data-act="col-edit" data-id="${c._id}">add games</button>`}</div>`}`;
     };
+    // Fold-open header: section style for Favorites / All games, collection style for collections.
+    const header = (key, label, count, cls) => `<button class="${cls}${isClosed(key) ? ' closed' : ''}" data-act="toggle-col" data-id="${key}" aria-expanded="${!isClosed(key)}"><div class="caret"></div><span class="col-name">${label}</span><span>${count}</span></button>`;
+    const body = x => (isClosed(x.key) ? '' : x.rows.map(e => row(e, x.key)).join(''));
+
+    const fav = sections.find(x => x.key === 'fav'), all = sections.find(x => x.key === 'all');
+    const colSection = x => `${header(x.key, esc(x.col.name), inCol(x.col).length, 'col-head')}
+        ${isClosed(x.key) ? '' : body(x) || `<div class="col-empty">${x.col.games.length ? 'No games match.' : `Empty · <button class="link" data-act="col-edit" data-id="${x.key}">add games</button>`}</div>`}`;
+
     return `<aside class="side">
       <div class="side-top">
         <label class="search"><span class="search-icon"></span><input id="lib-search" data-in="query" value="${esc(S.query)}" placeholder="Search library" aria-label="Search library"></label>
         <div class="side-chips">${filterChips(false)}</div>
       </div>
       <div class="side-list" data-keep-scroll="side">
-        ${favs.length ? `<div class="label">Favorites</div>${favs.map(row).join('')}` : ''}
+        ${fav ? `${header('fav', 'Favorites', fav.rows.length, 'sec-head')}${body(fav)}` : ''}
         <div class="side-head"><div class="label">Collections</div><button class="link" data-act="col-new" data-then="editor">+ New</button></div>
-        ${S.collections.map(colSection).join('') || '<div class="col-empty" style="padding-left:8px">Group games your way — make a collection.</div>'}
-        <div class="label">All games · ${items.length}</div>
-        ${items.map(row).join('') || noMatch('No games match.')}
+        ${sections.filter(x => x.col).map(colSection).join('') || '<div class="col-empty" style="padding-left:8px">Group games your way — make a collection.</div>'}
+        ${header('all', 'All games', items.length, 'sec-head')}
+        ${isClosed('all') ? '' : body(all) || noMatch('No games match.')}
       </div>
       <div class="side-foot"><div>${countText(libraryItems())}</div><a class="link" href="#/settings/library">Manage</a></div>
     </aside>
@@ -418,7 +434,8 @@
   // Store rows below New releases: picks from the genres you own most, then one row per genre.
   function genreRows(own) {
     const head = (title, sub, href) => `<div class="section-head"><div class="section-title">${title}</div><div class="section-sub">${sub}</div><div class="spacer"></div><a class="section-link" href="${href}">See all</a></div>`;
-    const row = list => `<div class="srow">${list.map(g => storeCard(g, own, esc(g.developer))).join('')}</div>`;
+    // One line of covers that fills the width; a "See all" tile takes up any space left at the end.
+    const row = (list, href, label) => `<div class="srow">${list.map(g => storeCard(g, own, esc(g.developer))).join('')}<a class="srow-more" href="${href}">${label} →</a></div>`;
     const newestFirst = (a, b) => (b.releaseYear || 0) - (a.releaseYear || 0) || byTitle(a, b);
     let html = '';
 
@@ -426,10 +443,11 @@
     const counts = {};
     S.entries.forEach(e => { counts[e.game.genre] = (counts[e.game.genre] || 0) + 1; });
     const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b)).slice(0, 2);
-    const picks = S.games.filter(g => top.includes(g.genre) && !own.has(g._id)).sort(newestFirst).slice(0, 10);
+    const picks = S.games.filter(g => top.includes(g.genre) && !own.has(g._id)).sort(newestFirst).slice(0, 14);
     if (picks.length) {
       const why = top.map(gn => `${plural(counts[gn], 'game')} in ${esc(gn)}`).join(' and ');
-      html += `<div class="shelf">${head('Recommended for you', `Because you have ${why}`, '#/store/browse?genre=' + encodeURIComponent(top[0]))}${row(picks)}</div>`;
+      const href = '#/store/browse?genre=' + encodeURIComponent(top[0]);
+      html += `<div class="shelf">${head('Recommended for you', `Because you have ${why}`, href)}${row(picks, href, `More ${esc(top[0])} games`)}</div>`;
     }
 
     // One row per genre with enough games, biggest genres first; unowned games lead.
@@ -439,9 +457,10 @@
       .filter(([, list]) => list.length >= 4)
       .sort(([a, x], [b, y]) => y.length - x.length || a.localeCompare(b))
       .forEach(([gn, list]) => {
-        const sorted = [...list].sort((a, b) => own.has(a._id) - own.has(b._id) || newestFirst(a, b)).slice(0, 10);
+        const sorted = [...list].sort((a, b) => own.has(a._id) - own.has(b._id) || newestFirst(a, b)).slice(0, 14);
         const owned = list.filter(g => own.has(g._id)).length;
-        html += `<div class="shelf">${head(esc(gn), `${plural(list.length, 'game')}${owned ? ` · ${owned} in your library` : ''}`, '#/store/browse?genre=' + encodeURIComponent(gn))}${row(sorted)}</div>`;
+        const href = '#/store/browse?genre=' + encodeURIComponent(gn);
+        html += `<div class="shelf">${head(esc(gn), `${plural(list.length, 'game')}${owned ? ` · ${owned} in your library` : ''}`, href)}${row(sorted, href, `See all ${plural(list.length, esc(gn) + ' game')}`)}</div>`;
       });
     return html;
   }
@@ -803,7 +822,7 @@
 
   const ACT = {
     retry: () => { S.loaded = false; render(); load().then(render); },
-    select: d => { S.selectedId = d.id; S.menu = null; render(); },
+    select: d => { S.selectedId = d.id; S.selFrom = d.v; S.menu = null; render(); },
     filter: d => { S.filter = d.v; render(); },
     genre: d => { S.genre = S.genre === d.v ? null : d.v; render(); },
     shelf: d => { S.shelf = d.v; render(); },
