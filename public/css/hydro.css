@@ -191,6 +191,13 @@ button.chip:hover:not(.on) { border-color: var(--line-3); }
 .menu button { padding: 9px 10px; border-radius: 6px; font-size: 13.5px; color: var(--text-2); }
 .menu button:hover { background: var(--raised); color: var(--text); }
 .menu button.danger { color: var(--danger); }
+.menu a { padding: 9px 10px; border-radius: 6px; font-size: 13.5px; color: var(--text-2); }
+.menu a:hover { background: var(--raised); color: var(--text); }
+.menu-head { display: flex; align-items: center; gap: 10px; padding: 8px 10px 12px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+.menu-name { font-size: 13.5px; font-weight: 600; }
+.menu-email { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-sep { height: 1px; background: var(--line); margin: 4px 0; }
+.topbar .menu { min-width: 240px; z-index: 40; }
 
 /* ---------- 1b cover grid ---------- */
 .lib-head { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }

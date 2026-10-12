@@ -99,7 +99,15 @@
       <nav class="nav" aria-label="Main">${tabs.map(([k, l]) => `<a href="#/${k}"${active === k ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
       <div class="spacer"></div>
       <form class="search" data-submit="search" role="search"><span class="search-icon"></span><input id="top-search" name="q" value="${esc(q)}" placeholder="${active === 'store' ? 'Search the store' : 'Search'}" aria-label="Search the store"></form>
-      <a class="me${active === 'settings' ? ' on' : ''}" href="#/settings/account" title="Account settings"><div class="avatar"></div><div class="me-name">${esc(user.username)}</div></a>
+      <div class="menu-wrap">
+        <button class="me${active === 'settings' || S.menu === 'account' ? ' on' : ''}" data-act="menu" data-id="account" aria-haspopup="menu" aria-expanded="${S.menu === 'account'}"><div class="avatar"></div><div class="me-name">${esc(user.username)}</div><div class="caret"></div></button>
+        ${S.menu === 'account' ? `<div class="menu" role="menu">
+          <div class="menu-head"><div class="avatar"></div><div style="min-width:0"><div class="menu-name">${esc(user.username)}</div><div class="menu-email">${esc(user.email)}</div></div></div>
+          <a role="menuitem" href="#/settings/account">Account settings</a>
+          <div class="menu-sep"></div>
+          <button role="menuitem" class="danger" data-act="signout">Sign out</button>
+        </div>` : ''}
+      </div>
     </header>`;
   }
 
