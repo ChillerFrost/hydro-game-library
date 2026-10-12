@@ -18,9 +18,10 @@ Data persists in Atlas: stop and restart the server and users, games, and librar
 |---|---|
 | **User** | `username` (unique, 3–30), `email` (unique, valid format) |
 | **Game** | `title` (unique), `developer`, `genre`, `releaseYear` (1970–2100, optional) |
+| **Collection** | `user` → User, `name` (1–40, unique per user ignoring case), `games` → [Game] |
 | **LibraryEntry** | `user` → User, `game` → Game, `installed`, `favorite`, `hoursPlayed` (≥ 0); unique per (user, game) |
 
-Relationships: User 1—N LibraryEntry N—1 Game (many-to-many via LibraryEntry). Deleting a user cascades to their entries.
+Relationships: User 1—N LibraryEntry N—1 Game (many-to-many via LibraryEntry); User 1—N Collection, each holding games from that user's library. Deleting a user cascades to their entries and collections; removing a game from a library also removes it from that user's collections.
 
 ## API routes
 | Method | Route | Description | Success |
@@ -35,7 +36,13 @@ Relationships: User 1—N LibraryEntry N—1 Game (many-to-many via LibraryEntry
 | POST | `/api/library` | Add game to library `{user,game}` | 201 |
 | GET | `/api/library/user/:userId?favorite=&installed=` | User's library (games populated) | 200 |
 | PATCH | `/api/library/:id` | Update `installed`/`favorite`/`hoursPlayed` | 200 |
-| DELETE | `/api/library/:id` | Remove from library | 204 |
+| DELETE | `/api/library/:id` | Remove from library (+ from the user's collections) | 204 |
+| POST | `/api/collections` | Create collection `{user,name}` | 201 |
+| GET | `/api/collections/user/:userId` | User's collections | 200 |
+| PATCH | `/api/collections/:id` | Rename `{name}` | 200 |
+| DELETE | `/api/collections/:id` | Delete collection (games stay in the library) | 204 |
+| POST | `/api/collections/:id/games` | Add a library game `{game}` | 200 / 400 |
+| DELETE | `/api/collections/:id/games/:gameId` | Remove a game | 200 |
 
 ## Errors
 `400` validation / invalid id / bad JSON · `404` not found · `401` wrong email/password · `409` duplicate (username, email, title, or game already in library) · `500` unexpected. Body: `{ "error": "message" }`.

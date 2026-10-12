@@ -17,6 +17,7 @@ const Hydro = (() => {
 
   function errorMessage(data) {
     if (data?.fields?.game) return 'That game is already in your library';
+    if (data?.fields?.name) return 'You already have a collection with that name';
     if (data?.fields) return `That ${Object.keys(data.fields)[0]} is already taken`;
     const msg = data?.error || 'Something went wrong';
     // "User validation failed: email: Path `email` is invalid (x)." -> "email is invalid"

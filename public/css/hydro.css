@@ -167,6 +167,20 @@ button.chip:hover:not(.on) { border-color: var(--line-3); }
 .row.sel { background: var(--raised); color: var(--text); }
 .row-cover { width: 26px; height: 34px; border-radius: 3px; flex: none; }
 .row-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.side-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 8px 6px; }
+.side-list .side-head .label { padding: 0; }
+.side-head .link { font-size: 12px; }
+.col-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text-2); }
+.col-head:hover { background: var(--hover); }
+.col-head .caret { transition: transform .12s; flex: none; }
+.col-head.closed .caret { transform: rotate(-90deg); }
+.col-head .col-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-head span:last-child { margin-left: auto; color: var(--dim); font-weight: 400; font-size: 12px; }
+.col-empty { padding: 2px 8px 8px 24px; font-size: 12px; color: var(--dim); }
+.col-empty .link { font-size: 12px; }
+.side-list .col-head + .row, .side-list .row + .col-head, .side-list .col-empty + .col-head { margin-top: 2px; }
+.side-list .side-head + .col-head { margin-top: 0; }
+.side-list .col-head ~ .label, .side-list .col-empty ~ .label { padding-top: 14px; }
 .side-foot { padding: 12px 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--dim); display: flex; justify-content: space-between; }
 
 .detail { flex: 1; min-width: 0; overflow: auto; }
@@ -191,6 +205,19 @@ button.chip:hover:not(.on) { border-color: var(--line-3); }
 .menu button { padding: 9px 10px; border-radius: 6px; font-size: 13.5px; color: var(--text-2); }
 .menu button:hover { background: var(--raised); color: var(--text); }
 .menu button.danger { color: var(--danger); }
+.menu .check-item { display: flex; align-items: center; gap: 10px; }
+.menu .check-item.on .check-box, .pick-row.on .check-box { background: var(--accent); border-color: var(--accent); }
+.menu .check-item.on .check-box::after, .pick-row.on .check-box::after { opacity: 1; }
+button.box-row { width: 100%; }
+button.box-row:hover { background: var(--hover); }
+.pick-list { max-height: 340px; overflow: auto; display: flex; flex-direction: column; gap: 2px; margin: 0 -8px; }
+.pick-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 6px; width: 100%; color: var(--text-2); }
+.pick-row:hover { background: var(--hover); }
+.pick-row.on { color: var(--text); }
+.rename { display: flex; gap: 10px; align-items: flex-end; }
+.rename .btn { height: 44px; }
+.rail-add { text-align: left; width: 100%; }
+.rail-add:hover { color: var(--text); }
 .menu a { padding: 9px 10px; border-radius: 6px; font-size: 13.5px; color: var(--text-2); }
 .menu a:hover { background: var(--raised); color: var(--text); }
 .menu-head { display: flex; align-items: center; gap: 10px; padding: 8px 10px 12px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }

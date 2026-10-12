@@ -17,6 +17,7 @@ router.delete('/:id', async (req, res, next) => {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
     await require('../models/LibraryEntry').deleteMany({ user: user._id }); // cascade
+    await require('../models/Collection').deleteMany({ user: user._id });
     res.status(204).end();
   } catch (e) { next(e); }
 });

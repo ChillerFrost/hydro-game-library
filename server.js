@@ -11,6 +11,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/games', require('./routes/games'));
 app.use('/api/library', require('./routes/library'));
+app.use('/api/collections', require('./routes/collections'));
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Route not found' }));
 

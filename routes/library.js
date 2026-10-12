@@ -39,6 +39,8 @@ router.delete('/:id', async (req, res, next) => {
   try {
     const entry = await LibraryEntry.findByIdAndDelete(req.params.id);
     if (!entry) return res.status(404).json({ error: 'Library entry not found' });
+    // A game that leaves the library leaves the user's collections too
+    await require('../models/Collection').updateMany({ user: entry.user }, { $pull: { games: entry.game } });
     res.status(204).end();
   } catch (e) { next(e); }
 });

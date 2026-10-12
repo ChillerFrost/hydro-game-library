@@ -7,15 +7,15 @@
 
   // ---------- preferences (per browser) ----------
   const PREF_KEY = 'hydro.prefs';
-  const prefs = Object.assign({ view: 'split', showUninstalled: true, confirmRemove: true }, readPrefs());
+  const prefs = Object.assign({ view: 'split', showUninstalled: true, confirmRemove: true, collapsed: [] }, readPrefs());
   function readPrefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch { return {}; } }
   function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch {} }
 
   // ---------- state ----------
   const S = {
-    games: [], entries: [], loaded: false, error: null,
-    selectedId: null, filter: 'all', genre: null, query: '', sort: 'recent', shelf: 'all',
-    menu: null, modal: null, dialog: null,
+    games: [], entries: [], collections: [], loaded: false, error: null,
+    selectedId: null, filter: 'all', genre: null, collection: null, query: '', sort: 'recent', shelf: 'all',
+    menu: null, modal: null, dialog: null, prompt: null, editor: null,
   };
 
   // ---------- formatting ----------
@@ -54,6 +54,11 @@
     if (!e) throw Object.assign(new Error('That game is no longer in your library'), { status: 404 });
     return e;
   }
+  // Collections hold game ids; these resolve them against the library.
+  const colById = id => S.collections.find(c => c._id === id);
+  const colsFor = gameId => S.collections.filter(c => c.games.includes(gameId));
+  const inCol = (c, list = libraryItems()) => list.filter(e => c.games.includes(e.game._id));
+  const replaceCol = c => { S.collections = S.collections.map(x => (x._id === c._id ? c : x)); };
   const libraryItems = () => (prefs.showUninstalled ? S.entries : S.entries.filter(e => e.installed));
   const SORTS = {
     recent: (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt),
@@ -66,6 +71,8 @@
     if (S.filter === 'installed') items = items.filter(e => e.installed);
     if (S.filter === 'favorites') items = items.filter(e => e.favorite);
     if (S.genre) items = items.filter(e => e.game.genre === S.genre);
+    const col = S.collection && colById(S.collection);
+    if (col) items = inCol(col, items);
     const q = S.query.trim().toLowerCase();
     if (q) items = items.filter(e => e.game.title.toLowerCase().includes(q) || e.game.genre.toLowerCase().includes(q));
     return [...items].sort(SORTS[sort] || SORTS.recent);
@@ -144,6 +151,11 @@
     const row = e => `<button class="row${e.installed ? ' inst' : ''}${sel && e._id === sel._id ? ' sel' : ''}" data-act="select" data-id="${e._id}"${sel && e._id === sel._id ? ' aria-current="true"' : ''}>
         <div class="row-cover" style="background:${art.cover(e.game)}"></div><div class="row-name">${esc(e.game.title)}</div><div class="dot${e.installed ? ' on' : ''}"></div></button>`;
     const favs = items.filter(e => e.favorite);
+    const colSection = c => {
+      const closed = prefs.collapsed.includes(c._id), rows = inCol(c, items);
+      return `<button class="col-head${closed ? ' closed' : ''}" data-act="toggle-col" data-id="${c._id}" aria-expanded="${!closed}"><div class="caret"></div><span class="col-name">${esc(c.name)}</span><span>${inCol(c).length}</span></button>
+        ${closed ? '' : rows.map(row).join('') || `<div class="col-empty">${c.games.length ? 'No games match.' : `Empty · <button class="link" data-act="col-edit" data-id="${c._id}">add games</button>`}</div>`}`;
+    };
     return `<aside class="side">
       <div class="side-top">
         <label class="search"><span class="search-icon"></span><input id="lib-search" data-in="query" value="${esc(S.query)}" placeholder="Search library" aria-label="Search library"></label>
@@ -151,6 +163,8 @@
       </div>
       <div class="side-list" data-keep-scroll="side">
         ${favs.length ? `<div class="label">Favorites</div>${favs.map(row).join('')}` : ''}
+        <div class="side-head"><div class="label">Collections</div><button class="link" data-act="col-new" data-then="editor">+ New</button></div>
+        ${S.collections.map(colSection).join('') || '<div class="col-empty" style="padding-left:8px">Group games your way — make a collection.</div>'}
         <div class="label">All games · ${items.length}</div>
         ${items.map(row).join('') || noMatch('No games match.')}
       </div>
@@ -159,15 +173,26 @@
     <section class="detail" data-keep-scroll="detail">${sel ? entryDetail(sel) : `<div class="empty" style="height:100%"><div class="empty-sub">No games match these filters.</div></div>`}</section>`;
   }
 
+  // Checklist of collections for one game (detail panel dropdown).
+  function collectionMenu(g) {
+    return `${S.collections.map(c => { const on = c.games.includes(g._id); return `<button role="menuitemcheckbox" aria-checked="${on}" class="check-item${on ? ' on' : ''}" data-act="col-toggle" data-id="${c._id}" data-v="${g._id}"><span class="check-box"></span>${esc(c.name)}</button>`; }).join('')}
+      ${S.collections.length ? '<div class="menu-sep"></div>' : ''}
+      <button role="menuitem" data-act="col-new" data-game="${g._id}">+ New collection…</button>`;
+  }
+
   function entryDetail(e) {
     const g = e.game;
-    const sameGenre = S.entries.filter(x => x.game.genre === g.genre).length;
     const favCount = S.entries.filter(x => x.favorite).length;
-    const menuOpen = S.menu === e._id;
+    const menuOpen = S.menu === e._id, colMenuOpen = S.menu === 'col:' + e._id;
+    const mine = colsFor(g._id);
     return `<div class="hero" style="background:${art.hero(g)}"><div class="hero-text"><div class="hero-studio">${esc(g.developer)}</div><div class="hero-name">${esc(g.title)}</div></div></div>
     <div class="actions">
       ${playBtn(e, 'btn btn-primary big', 'play-tri')}
       ${e.installed ? `<button class="btn btn-ghost" data-act="uninstall" data-id="${e._id}">Uninstall</button>` : ''}
+      <div class="menu-wrap">
+        <button class="btn btn-ghost" data-act="menu" data-id="col:${e._id}" aria-haspopup="menu" aria-expanded="${colMenuOpen}">Add to collection</button>
+        ${colMenuOpen ? `<div class="menu" role="menu" style="left:0;right:auto">${collectionMenu(g)}</div>` : ''}
+      </div>
       <button class="btn btn-ghost" data-act="trailer" data-id="${g._id}">Watch trailer</button>
       <button class="btn btn-ghost${e.favorite ? ' on' : ''}" data-act="fav" data-id="${e._id}" aria-pressed="${e.favorite}">${e.favorite ? 'Favorited' : 'Favorite'}</button>
       <div class="menu-wrap">
@@ -186,7 +211,8 @@
       <div class="stack">
         <div class="group"><div class="label">In collections</div><div class="box">
           ${e.favorite ? `<div class="box-row"><div>Favorites</div><div class="muted">${plural(favCount, 'game')}</div></div>` : ''}
-          <div class="box-row"><div>${esc(g.genre)}</div><div class="muted">${plural(sameGenre, 'game')}</div></div>
+          ${mine.map(c => `<button class="box-row" data-act="col-edit" data-id="${c._id}"><div>${esc(c.name)}</div><div class="muted">${plural(inCol(c, S.entries).length, 'game')}</div></button>`).join('')}
+          ${e.favorite || mine.length ? '' : `<div class="box-row"><div class="muted">Not in any collections</div><button class="link" data-act="menu" data-id="col:${e._id}">Add</button></div>`}
         </div></div>
         <div class="group"><div class="label">Details</div><div class="kv">
           <div>Developer</div><div>${esc(g.developer)}</div>
@@ -216,9 +242,11 @@
       </div>
       <div class="chips">
         ${filterChips(true)}
+        <div class="vsep"></div>
+        ${S.collections.map(c => `<button class="chip lg${S.collection === c._id ? ' on' : ''}" data-act="col-filter" data-id="${c._id}" aria-pressed="${S.collection === c._id}">${esc(c.name)} · ${inCol(c, all).length}</button>`).join('')}
+        <button class="chip lg" data-act="col-new" data-then="editor" style="background:none;border:1px dashed rgba(255,255,255,.18);color:var(--muted)">+ New collection</button>
         ${gs.length ? '<div class="vsep"></div>' : ''}
         ${gs.map(gn => `<button class="chip lg${S.genre === gn ? ' on' : ''}" data-act="genre" data-v="${esc(gn)}" aria-pressed="${S.genre === gn}">${esc(gn)}</button>`).join('')}
-        <a class="chip lg" href="#/store" style="background:none;border:1px dashed rgba(255,255,255,.18);color:var(--muted)">+ Add games</a>
       </div>
       <div class="cgrid">${items.map(gridCard).join('') || noMatch('No games match these filters.')}</div>
     </div></div>`;
@@ -245,13 +273,16 @@
     const item = (key, label, n) => `<button class="rail-item${S.shelf === key ? ' on' : ''}" data-act="shelf" data-v="${esc(key)}"><span>${label}</span><span>${n}</span></button>`;
     const rail = `<nav class="rail" aria-label="Library sections">
       ${item('all', 'All games', all.length)}${item('installed', 'Installed', inst.length)}${item('favorites', 'Favorites', favs.length)}${item('recent', 'Recently played', played.length)}
+      <div class="label">Collections</div>${S.collections.map(c => item('col:' + c._id, esc(c.name), inCol(c, all).length)).join('')}
+      <button class="rail-add" data-act="col-new" data-then="editor">+ New collection</button>
       ${gs.length ? '<div class="label">Genres</div>' : ''}${gs.map(gn => item('genre:' + gn, esc(gn), inGenre(gn).length)).join('')}
-      <a class="rail-add" href="#/store">+ Add games</a>
     </nav>`;
 
     const head = (title, sub, link) => `<div class="section-head"><div class="section-title">${title}</div><div class="section-sub">${sub}</div>${link ? `<div class="spacer"></div>${link}` : ''}</div>`;
     const seeAll = key => `<button class="section-link" data-act="shelf" data-v="${esc(key)}">See all</button>`;
     const strip = (list, addGenre) => `<div class="strip">${list.map(miniCard).join('')}${addGenre ? `<a class="mini-add" href="#/store/browse?genre=${encodeURIComponent(addGenre)}">+ Add game</a>` : ''}</div>`;
+    const addTile = c => `<button class="mini-add" data-act="col-edit" data-id="${c._id}">+ Add game</button>`;
+    const editLink = c => `<button class="section-link" data-act="col-edit" data-id="${c._id}">Edit</button>`;
 
     let body;
     if (S.shelf === 'all') {
@@ -260,14 +291,17 @@
         <div class="shelf">${head('Continue playing', played.length ? 'Most recent' : 'Pick something to start')}<div class="wide3">${recent.map(wideCard).join('')}</div></div>
         ${inst.length ? `<div class="shelf">${head('Installed', plural(inst.length, 'game'), seeAll('installed'))}${strip([...inst].sort(byTitle))}</div>` : ''}
         ${favs.length ? `<div class="shelf">${head('Favorites', plural(favs.length, 'game'), seeAll('favorites'))}${strip([...favs].sort(byTitle))}</div>` : ''}
+        ${S.collections.map(c => `<div class="shelf">${head(esc(c.name), `Collection · ${plural(inCol(c, all).length, 'game')}`, editLink(c))}<div class="strip">${inCol(c, all).sort(byTitle).map(miniCard).join('')}${addTile(c)}</div></div>`).join('')}
         ${gs.map(gn => `<div class="shelf">${head(esc(gn), `Genre · ${plural(inGenre(gn).length, 'game')}`, seeAll('genre:' + gn))}${strip(inGenre(gn), gn)}</div>`).join('')}`;
     } else {
-      const [kind, gn] = S.shelf.split(/:(.*)/);
-      const lists = { installed: inst, favorites: favs, recent: [...played].sort(SORTS.recent), genre: gn ? inGenre(gn) : [] };
-      const titles = { installed: 'Installed', favorites: 'Favorites', recent: 'Recently played', genre: esc(gn || '') };
+      const [kind, arg] = S.shelf.split(/:(.*)/);
+      const col = kind === 'col' && colById(arg);
+      const lists = { installed: inst, favorites: favs, recent: [...played].sort(SORTS.recent), genre: arg ? inGenre(arg) : [], col: col ? inCol(col, all).sort(byTitle) : [] };
+      const titles = { installed: 'Installed', favorites: 'Favorites', recent: 'Recently played', genre: esc(arg || ''), col: col ? esc(col.name) : 'Collection' };
       const list = lists[kind] || [];
-      body = `<div class="shelf">${head(titles[kind], plural(list.length, 'game'), `<button class="section-link" data-act="shelf" data-v="all">Back to shelves</button>`)}
-        <div class="strip" style="flex-wrap:wrap;row-gap:22px">${list.map(miniCard).join('') || noMatch('Nothing here yet.')}</div></div>`;
+      const back = `<button class="section-link" data-act="shelf" data-v="all">Back to shelves</button>`;
+      body = `<div class="shelf">${head(titles[kind], plural(list.length, 'game'), col ? `${editLink(col)}${back}` : back)}
+        <div class="strip" style="flex-wrap:wrap;row-gap:22px">${list.map(miniCard).join('')}${col ? addTile(col) : list.length ? '' : noMatch('Nothing here yet.')}</div></div>`;
     }
     return rail + `<div class="shelves" data-keep-scroll="shelves">${body}</div>`;
   }
@@ -491,6 +525,10 @@
         </div>
       </div>
       <div class="group" style="gap:12px">
+        <div class="section-head"><div class="group" style="gap:3px"><div class="prow-title">Collections</div><div class="prow-sub">Your own categories. They show in the library side menu.</div></div><div class="spacer"></div><button class="btn xs btn-ghost" data-act="col-new" data-then="editor">+ New collection</button></div>
+        <div class="panel">${S.collections.map(c => `<div class="prow"><div class="prow-text"><div class="prow-title">${esc(c.name)}</div><div class="prow-sub">${plural(inCol(c, S.entries).length, 'game')}</div></div><button class="btn xs btn-ghost" data-act="col-edit" data-id="${c._id}">Edit</button></div>`).join('') || '<div class="prow"><div class="prow-sub">No collections yet.</div></div>'}</div>
+      </div>
+      <div class="group" style="gap:12px">
         <div class="prow-title">Summary</div>
         <div class="panel" style="padding:16px 20px;gap:14px">
           ${meter(`Installed · ${plural(inst, 'game')}`, `${inst} of ${n}`, pct(inst))}
@@ -528,7 +566,11 @@
           <button class="opt" data-act="modal-install" role="switch" aria-checked="${m.install}"><div class="toggle${m.install ? ' on' : ''}"></div><div class="opt-text"><div class="opt-title">Install now</div><div class="opt-sub">${m.install ? 'Ready to play as soon as you open your library' : 'You can install it later from your library'}</div></div></button>
         </div>
         <div class="group" style="gap:10px"><div class="label">Add to collection <span style="color:#3e4856;text-transform:none;letter-spacing:0">· optional</span></div>
-          <div class="chips"><button class="chip pick${m.fav ? ' on' : ''}" data-act="modal-fav" aria-pressed="${m.fav}">Favorites</button></div>
+          <div class="chips">
+            <button class="chip pick${m.fav ? ' on' : ''}" data-act="modal-fav" aria-pressed="${m.fav}">Favorites</button>
+            ${S.collections.map(c => `<button class="chip pick${m.cols.includes(c._id) ? ' on' : ''}" data-act="modal-col" data-id="${c._id}" aria-pressed="${m.cols.includes(c._id)}">${esc(c.name)}</button>`).join('')}
+            <button class="chip pick" data-act="col-new" data-then="modal" style="background:none;border:1px dashed rgba(255,255,255,.18);color:var(--muted)">+ New</button>
+          </div>
         </div>
       </div>
       <div class="modal-foot">
@@ -548,6 +590,42 @@
     </div></div>`;
   }
   const ask = dialog => { S.dialog = dialog; render(); };
+
+  // Name prompt (new collection). Errors show inline so the typed name survives.
+  function promptDialog() {
+    const p = S.prompt;
+    return `<div class="overlay" data-act="prompt-bg"><form class="modal" data-submit="prompt" role="dialog" aria-modal="true" aria-labelledby="p-title" style="width:440px" novalidate>
+      <div class="modal-head"><div class="modal-title" id="p-title">${p.title}</div><button type="button" class="modal-x" data-act="prompt-cancel" aria-label="Close">×</button></div>
+      <div class="modal-body">
+        <div class="field"><label class="field-label" for="prompt-input">Name</label><input class="input" id="prompt-input" name="name" maxlength="40" value="${esc(p.value || '')}" placeholder="Co-op nights" autocomplete="off" data-autofocus></div>
+        <div class="form-error" id="prompt-error" role="alert"></div>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn sm btn-ghost" data-act="prompt-cancel">Cancel</button><button class="btn sm btn-primary" type="submit">${p.label}</button></div>
+    </form></div>`;
+  }
+
+  // Collection editor: rename, pick games from the library, delete.
+  function collectionEditor() {
+    const c = colById(S.editor.id);
+    if (!c) return '';
+    const lib = [...S.entries].sort(byTitle);
+    return `<div class="overlay" data-act="editor-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="e-title" style="width:560px">
+      <div class="modal-head">
+        <div style="display:flex;flex-direction:column;gap:3px;min-width:0"><div class="kicker">Collection</div><div class="modal-title" id="e-title">${esc(c.name)}</div><div class="modal-sub">${plural(inCol(c, S.entries).length, 'game')}</div></div>
+        <button class="modal-x" data-act="editor-close" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <form class="rename" data-submit="rename" novalidate>
+          <div class="field" style="flex:1"><label class="field-label" for="rename-input">Name</label><input class="input" id="rename-input" name="name" maxlength="40" value="${esc(c.name)}" autocomplete="off"></div>
+          <button class="btn sm btn-ghost" type="submit">Rename</button>
+        </form>
+        <div class="group" style="gap:10px"><div class="label">Games in your library</div>
+          <div class="pick-list">${lib.map(e => { const on = c.games.includes(e.game._id); return `<button class="pick-row${on ? ' on' : ''}" data-act="col-toggle" data-id="${c._id}" data-v="${e.game._id}" role="checkbox" aria-checked="${on}"><div class="row-cover" style="background:${art.cover(e.game)}"></div><div class="row-name">${esc(e.game.title)}</div><span class="check-box"></span></button>`; }).join('') || noMatch('Your library is empty. Add games from the store first.')}</div>
+        </div>
+      </div>
+      <div class="modal-foot"><button class="btn sm btn-ghost danger" data-act="col-delete" data-id="${c._id}" style="margin-right:auto">Delete collection</button><button class="btn sm btn-primary" data-act="editor-close">Done</button></div>
+    </div></div>`;
+  }
 
   let toastTimer;
   function toast(msg, isError) {
@@ -589,7 +667,7 @@
     if (S.error) page = `<div class="page" style="display:flex"><div class="empty"><div class="empty-title">Can’t reach Hydro</div><div class="empty-sub">${esc(S.error)}</div><button class="btn btn-primary big" data-act="retry">Try again</button></div></div>`;
     else page = S.loaded ? (PAGES[r.name] || PAGES.library)(r) : '';
     $('app').innerHTML = `<div class="app">${topbar(ACTIVE[r.name] || 'library', r)}<main class="main">${page}</main></div>`;
-    $('layer').innerHTML = S.dialog ? confirmDialog() : S.modal ? addModal() : '';
+    $('layer').innerHTML = S.dialog ? confirmDialog() : S.prompt ? promptDialog() : S.editor ? collectionEditor() : S.modal ? addModal() : '';
 
     const slot = $('trailer-slot');
     if (slot && video && video.dataset.src === slot.dataset.src) slot.replaceWith(video);
@@ -602,7 +680,7 @@
     // With a dialog open, focus stays inside it.
     const layer = $('layer'), open = !!layer.firstElementChild;
     const scope = open ? layer : document;
-    const target = (focus && scope.querySelector(focus.sel)) || (open ? layer.querySelector('.btn-primary, .danger') : null);
+    const target = (focus && scope.querySelector(focus.sel)) || (open ? layer.querySelector('[data-autofocus], .btn-primary, .danger') : null);
     if (target) {
       target.focus({ preventScroll: true });
       if (focus?.start != null) try { target.setSelectionRange(focus.start, focus.end); } catch {}
@@ -614,7 +692,9 @@
       const [games, users] = await Promise.all([api('/games'), api('/users')]);
       if (!users.some(u => u._id === user._id)) { Hydro.clearUser(); location.replace('/login.html'); return; }
       S.games = games;
-      S.entries = (await api('/library/user/' + user._id)).filter(e => e.game);
+      const [entries, collections] = await Promise.all([api('/library/user/' + user._id), api('/collections/user/' + user._id)]);
+      S.entries = entries.filter(e => e.game);
+      S.collections = collections;
       S.error = null;
     } catch (err) {
       S.error = err.message === 'Failed to fetch' ? 'The server isn’t responding. Check that it’s running, then try again.' : err.message;
@@ -632,6 +712,7 @@
       if (install && m.install) body.installed = true;
       if (m.fav) body.favorite = true;
       if (Object.keys(body).length) await patch(e, body);
+      for (const id of m.cols) replaceCol(await api(`/collections/${id}/games`, 'POST', { game: e.game._id }));
       if (openLibrary) {
         Object.assign(S, { selectedId: e._id, filter: 'all', genre: null, query: '', shelf: 'all' });
         location.hash = '#/library';
@@ -645,7 +726,7 @@
     filter: d => { S.filter = d.v; render(); },
     genre: d => { S.genre = S.genre === d.v ? null : d.v; render(); },
     shelf: d => { S.shelf = d.v; render(); },
-    view: d => { prefs.view = d.v; savePrefs(); render(); },
+    view: d => { prefs.view = d.v; S.collection = null; savePrefs(); render(); },
     pref: d => { prefs[d.k] = !prefs[d.k]; savePrefs(); render(); },
     menu: d => { S.menu = S.menu === d.id ? null : d.id; render(); },
     open: d => { S.menu = null; location.hash = '#/game/' + d.id; },
@@ -673,6 +754,7 @@
       const go = () => run(async () => {
         await api('/library/' + e._id, 'DELETE');
         S.entries = S.entries.filter(x => x._id !== e._id);
+        S.collections.forEach(c => { c.games = c.games.filter(id => id !== e.game._id); }); // server does the same
         toast(`Removed ${e.game.title} from your library`);
       });
       if (!prefs.confirmRemove) return go();
@@ -681,11 +763,62 @@
     add: d => run(async () => {
       const created = await api('/library', 'POST', { user: user._id, game: d.id });
       S.entries.push({ ...created, game: gameById(d.id) });
-      S.modal = { entryId: created._id, gameId: d.id, install: true, fav: false };
+      S.modal = { entryId: created._id, gameId: d.id, install: true, fav: false, cols: [] };
     }),
 
     'modal-install': () => { S.modal.install = !S.modal.install; render(); },
     'modal-fav': () => { S.modal.fav = !S.modal.fav; render(); },
+    'modal-col': d => { const c = S.modal.cols; S.modal.cols = c.includes(d.id) ? c.filter(x => x !== d.id) : [...c, d.id]; render(); },
+
+    // collections
+    'col-filter': d => { S.collection = S.collection === d.id ? null : d.id; render(); },
+    'toggle-col': d => {
+      prefs.collapsed = prefs.collapsed.includes(d.id) ? prefs.collapsed.filter(x => x !== d.id) : [...prefs.collapsed, d.id];
+      savePrefs(); render();
+    },
+    'col-new': d => {
+      S.menu = null;
+      S.prompt = {
+        title: 'New collection', label: 'Create',
+        onOk: async name => {
+          let col = await api('/collections', 'POST', { user: user._id, name });
+          if (d.game) col = await api(`/collections/${col._id}/games`, 'POST', { game: d.game });
+          S.collections.push(col);
+          if (d.then === 'editor') S.editor = { id: col._id };
+          if (d.then === 'modal' && S.modal) S.modal.cols.push(col._id);
+          toast(d.game ? `Added to ${col.name}` : `Created ${col.name}`);
+        },
+      };
+      render();
+    },
+    'col-edit': d => { S.menu = null; S.editor = { id: d.id }; render(); },
+    'col-toggle': d => run(async () => {
+      const c = colById(d.id);
+      if (!c) throw Object.assign(new Error('That collection no longer exists'), { status: 404 });
+      replaceCol(c.games.includes(d.v)
+        ? await api(`/collections/${c._id}/games/${d.v}`, 'DELETE')
+        : await api(`/collections/${c._id}/games`, 'POST', { game: d.v }));
+    }),
+    'col-delete': d => {
+      const c = colById(d.id);
+      if (!c) return render();
+      ask({
+        title: 'Delete collection?', danger: true, label: 'Delete collection',
+        body: `<b>${esc(c.name)}</b> will be deleted. The games stay in your library.`,
+        onOk: () => run(async () => {
+          await api('/collections/' + c._id, 'DELETE');
+          S.collections = S.collections.filter(x => x._id !== c._id);
+          if (S.collection === c._id) S.collection = null;
+          if (S.shelf === 'col:' + c._id) S.shelf = 'all';
+          S.editor = null;
+          toast(`Deleted ${c.name}`);
+        }),
+      });
+    },
+    'editor-close': () => { S.editor = null; render(); },
+    'editor-bg': (d, el, ev) => { if (ev.target === el) ACT['editor-close'](); },
+    'prompt-cancel': () => { S.prompt = null; render(); },
+    'prompt-bg': (d, el, ev) => { if (ev.target === el) ACT['prompt-cancel'](); },
     'modal-confirm': () => finishModal(true, true),
     'modal-view': () => finishModal(false, true),
     'modal-skip': () => finishModal(false, false),
@@ -707,12 +840,25 @@
       const q = form.q.value.trim();
       location.hash = '#/store/browse' + (q ? '?q=' + encodeURIComponent(q) : '');
     },
+    prompt: async form => {
+      const name = form.name.value.trim();
+      if (!name) return void ($('prompt-error').textContent = 'Give it a name');
+      try { await S.prompt.onOk(name); S.prompt = null; render(); } catch (err) { $('prompt-error').textContent = err.message; }
+    },
+    rename: form => {
+      const name = form.name.value.trim();
+      if (!name) return toast('Give it a name', true);
+      run(async () => { const c = await api('/collections/' + S.editor.id, 'PATCH', { name }); replaceCol(c); toast(`Renamed to ${c.name}`); });
+    },
   };
 
   document.addEventListener('click', ev => {
     const el = ev.target.closest('[data-act]');
     if (S.menu && !ev.target.closest('.menu-wrap')) { S.menu = null; if (!el) return render(); }
-    if (el && ACT[el.dataset.act]) { ev.preventDefault(); ACT[el.dataset.act](el.dataset, el, ev); }
+    if (!el || !ACT[el.dataset.act]) return;
+    // Overlay backdrops wrap forms; letting those clicks through keeps submit buttons working.
+    if (!el.dataset.act.endsWith('-bg')) ev.preventDefault();
+    ACT[el.dataset.act](el.dataset, el, ev);
   });
   document.addEventListener('input', ev => {
     if (ev.target.dataset.in === 'query') { S.query = ev.target.value; render(); }
@@ -727,6 +873,8 @@
   document.addEventListener('keydown', ev => {
     if (ev.key !== 'Escape') return;
     if (S.dialog) ACT['dialog-cancel']();
+    else if (S.prompt) ACT['prompt-cancel']();
+    else if (S.editor) ACT['editor-close']();
     else if (S.modal) finishModal(false, false);
     else if (S.menu) { S.menu = null; render(); }
   });
