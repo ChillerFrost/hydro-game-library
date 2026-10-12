@@ -4,6 +4,8 @@ Node.js + Express + Mongoose + MongoDB Atlas. Users build a library of games fro
 
 The catalogue (100 games) is hard-coded in `data/games.js`. On every startup the `games` collection is synced to that list by title: new games are added, changed fields are updated, and games no longer in the list are removed along with their library entries. To change the store, edit `data/games.js` and restart.
 
+Cover art, screenshots, trailers and short descriptions come from the Steam store and are saved in `data/media.json` (images and trailer streams are loaded from Steam's CDN at view time). After changing `data/games.js`, run `node scripts/fetch-media.js` to refresh it; titles that match the wrong Steam app can be pinned in the `APP_IDS` table at the top of that script.
+
 ## Setup
 1. `npm install`
 2. Copy `.env.example` to `.env` and set `MONGODB_URI` to your Atlas connection string (allow your IP in Atlas Network Access).

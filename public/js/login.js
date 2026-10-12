@@ -48,13 +48,18 @@
 
   // Tilted covers: real catalogue titles when there are any, else the design's samples.
   const fallback = ['Tidefall', 'Hollow Vale', 'Neon Drift'];
-  function paintTilts(names) {
+  function paintTilts(games) {
     document.querySelectorAll('[data-tilt]').forEach(el => {
-      const name = names[+el.dataset.tilt] || fallback[+el.dataset.tilt];
-      el.style.background = Hydro.art.cover(name);
-      el.querySelector('.cover-name').textContent = name;
+      const g = games[+el.dataset.tilt] || fallback[+el.dataset.tilt];
+      el.style.background = Hydro.art.cover(g);
+      el.classList.toggle('has-art', !!g.cover);
+      el.querySelector('.cover-name').textContent = g.title || g;
     });
   }
   paintTilts([]);
-  Hydro.api('/games').then(games => paintTilts(games.slice(0, 3).map(g => g.title))).catch(() => {});
+  const FEATURED = ['Elden Ring', 'Hades', 'Hollow Knight'];
+  Hydro.api('/games').then(games => {
+    const pick = FEATURED.map(t => games.find(g => g.title === t && g.cover)).filter(Boolean);
+    paintTilts(pick.length === 3 ? pick : games.filter(g => g.cover).slice(0, 3));
+  }).catch(() => {});
 })();

@@ -41,7 +41,9 @@
   const lastPlayed = e => (e.hoursPlayed > 0 ? cap(ago(e.updatedAt)) : 'Never');
   const countText = list => `${plural(list.length, 'game')} · ${list.filter(e => e.installed).length} installed`;
   const genres = games => [...new Set(games.map(g => g.genre))].sort((a, b) => a.localeCompare(b));
-  const about = g => `${g.title} is ${/^[aeiou]/i.test(g.genre) ? 'an' : 'a'} ${g.genre} game from ${g.developer}${g.releaseYear ? `, released in ${g.releaseYear}` : ''}.`;
+  const about = g => g.description || `${g.title} is ${/^[aeiou]/i.test(g.genre) ? 'an' : 'a'} ${g.genre} game from ${g.developer}${g.releaseYear ? `, released in ${g.releaseYear}` : ''}.`;
+  const hasArt = (g, key = 'cover') => (g[key] ? ' has-art' : '');
+  const youtube = g => `https://www.youtube.com/results?search_query=${encodeURIComponent(`${g.title} official trailer`)}`;
   const byTitle = (a, b) => (a.game || a).title.localeCompare((b.game || b).title);
 
   // ---------- data helpers ----------
@@ -85,6 +87,13 @@
   }
 
   // ---------- small templates ----------
+  // Screenshot tiles; each opens the game page's viewer on that shot.
+  function shotTiles(g, n) {
+    const shots = (g.screenshots || []).slice(0, n);
+    if (!shots.length) return Array.from({ length: n }, (_, i) => `<div class="shot">screenshot ${i + 1}</div>`).join('');
+    const offset = g.trailer ? 1 : 0;
+    return shots.map((sh, i) => `<button class="shot img" style="background:${art.shot(sh.thumb)}" data-act="media" data-id="${g._id}" data-v="${i + offset}" aria-label="Screenshot ${i + 1} of ${esc(g.title)}"></button>`).join('');
+  }
   const tagChips = (g, cls = '') => `<span class="chip ${cls}">${esc(g.genre)}</span>`;
   const stat = (label, val) => `<div class="stat"><div class="label">${label}</div><div class="stat-val">${esc(val)}</div></div>`;
   const playBtn = (e, cls = 'btn btn-primary', tri = 'play-tri sm') =>
@@ -133,7 +142,7 @@
     const items = filtered('title');
     const sel = items.find(e => e._id === S.selectedId) || items[0];
     const row = e => `<button class="row${e.installed ? ' inst' : ''}${sel && e._id === sel._id ? ' sel' : ''}" data-act="select" data-id="${e._id}"${sel && e._id === sel._id ? ' aria-current="true"' : ''}>
-        <div class="row-cover" style="background:${art.cover(e.game.title)}"></div><div class="row-name">${esc(e.game.title)}</div><div class="dot${e.installed ? ' on' : ''}"></div></button>`;
+        <div class="row-cover" style="background:${art.cover(e.game)}"></div><div class="row-name">${esc(e.game.title)}</div><div class="dot${e.installed ? ' on' : ''}"></div></button>`;
     const favs = items.filter(e => e.favorite);
     return `<aside class="side">
       <div class="side-top">
@@ -155,10 +164,11 @@
     const sameGenre = S.entries.filter(x => x.game.genre === g.genre).length;
     const favCount = S.entries.filter(x => x.favorite).length;
     const menuOpen = S.menu === e._id;
-    return `<div class="hero" style="background:${art.hero(g.title)}"><div class="hero-text"><div class="hero-studio">${esc(g.developer)}</div><div class="hero-name">${esc(g.title)}</div></div></div>
+    return `<div class="hero" style="background:${art.hero(g)}"><div class="hero-text"><div class="hero-studio">${esc(g.developer)}</div><div class="hero-name">${esc(g.title)}</div></div></div>
     <div class="actions">
       ${playBtn(e, 'btn btn-primary big', 'play-tri')}
       ${e.installed ? `<button class="btn btn-ghost" data-act="uninstall" data-id="${e._id}">Uninstall</button>` : ''}
+      <button class="btn btn-ghost" data-act="trailer" data-id="${g._id}">Watch trailer</button>
       <button class="btn btn-ghost${e.favorite ? ' on' : ''}" data-act="fav" data-id="${e._id}" aria-pressed="${e.favorite}">${e.favorite ? 'Favorited' : 'Favorite'}</button>
       <div class="menu-wrap">
         <button class="btn btn-ghost btn-icon" data-act="menu" data-id="${e._id}" aria-label="More options" aria-haspopup="menu" aria-expanded="${menuOpen}">···</button>
@@ -171,7 +181,7 @@
       <div class="stack">
         <div class="group"><div class="label">About</div><p class="prose">${esc(about(g))}</p></div>
         <div class="group"><div class="label">Tags</div><div class="tags">${tagChips(g)}</div></div>
-        <div class="group"><div class="label">Screenshots</div><div class="shots"><div class="shot">screenshot 1</div><div class="shot">screenshot 2</div><div class="shot">screenshot 3</div></div></div>
+        <div class="group"><div class="label">Screenshots</div><div class="shots">${shotTiles(g, 3)}</div></div>
       </div>
       <div class="stack">
         <div class="group"><div class="label">In collections</div><div class="box">
@@ -217,7 +227,7 @@
   function gridCard(e) {
     const g = e.game;
     return `<div class="card${e.installed ? '' : ' dim'}">
-      <div class="cover" style="background:${art.cover(g.title)}">
+      <div class="cover${hasArt(g)}" style="background:${art.cover(g)}">
         <div class="cover-name">${esc(g.title)}</div>
         <div class="card-over" data-act="open" data-id="${g._id}" style="cursor:pointer">${playBtn(e)}</div>
         ${e.installed ? '<div class="inst-dot"></div>' : ''}
@@ -265,14 +275,14 @@
   function wideCard(e) {
     const g = e.game;
     return `<div class="wcard">
-      <div class="wcard-art" style="background:${art.wide(g.title)}"><div class="cover-name">${esc(g.title)}</div>${playBtn(e)}</div>
+      <div class="wcard-art${hasArt(g, 'header')}" style="background:${art.wide(g)}"><div class="cover-name">${esc(g.title)}</div>${playBtn(e)}</div>
       <div class="wcard-foot"><div style="display:flex;flex-direction:column;gap:2px;min-width:0"><a class="wcard-name" href="#/game/${g._id}">${esc(g.title)}</a><div class="wcard-sub">${e.hoursPlayed > 0 ? `Last played ${ago(e.updatedAt)}` : 'Not played yet'}</div></div><div class="mono-sm">${playtime(e)}</div></div>
     </div>`;
   }
 
   function miniCard(e) {
     const g = e.game;
-    return `<a class="mini${e.installed ? '' : ' dim'}" href="#/game/${g._id}"><div class="cover" style="background:${art.cover(g.title)}"><div class="cover-name">${esc(g.title)}</div></div><div class="mini-sub">${e.installed ? `${playtime(e)} played` : 'Not installed'}</div></a>`;
+    return `<a class="mini${e.installed ? '' : ' dim'}" href="#/game/${g._id}"><div class="cover${hasArt(g)}" style="background:${art.cover(g)}"><div class="cover-name">${esc(g.title)}</div></div><div class="mini-sub">${e.installed ? `${playtime(e)} played` : 'Not installed'}</div></a>`;
   }
 
   // ---------- store ----------
@@ -300,9 +310,9 @@
     const recent = newest.filter(g => g._id !== f._id).slice(0, 4);
     return `<div class="col" data-keep-scroll="store">${storeNav('featured')}<div class="pad" style="padding-top:22px">
       <div class="feature">
-        <a class="feature-art" href="#/game/${f._id}" style="background:${art.hero(f.title)}"><div class="feature-kicker">Featured</div><div class="hero-text"><div class="hero-studio">${esc(f.developer)}</div><div class="hero-name">${esc(f.title)}</div></div></a>
+        <a class="feature-art" href="#/game/${f._id}" style="background:${art.hero(f)}"><div class="feature-kicker">Featured</div><div class="hero-text"><div class="hero-studio">${esc(f.developer)}</div><div class="hero-name">${esc(f.title)}</div></div></a>
         <div class="feature-side">
-          <div class="shots4"><div class="shot">screenshot</div><div class="shot">screenshot</div><div class="shot">screenshot</div><div class="shot">screenshot</div></div>
+          <div class="shots4">${shotTiles(f, 4)}</div>
           <p class="prose-sm">${esc(about(f))}</p>
           <div class="tags">${tagChips(f, 'tag')}</div>
           <div class="spacer"></div>
@@ -321,7 +331,7 @@
 
   function offerCard(g, own) {
     return `<a class="ocard" href="#/game/${g._id}">
-      <div class="ocard-art" style="background:${art.wide(g.title)}">${own.has(g._id) ? '<div class="badge owned">OWNED</div>' : ''}<div class="cover-name">${esc(g.title)}</div></div>
+      <div class="ocard-art${hasArt(g, 'header')}" style="background:${art.wide(g)}">${own.has(g._id) ? '<div class="badge owned">OWNED</div>' : ''}<div class="cover-name">${esc(g.title)}</div></div>
       <div class="ocard-foot"><div style="min-width:0"><div class="ocard-name">${esc(g.title)}</div><div class="ocard-sub">${esc(g.genre)} · ${esc(g.developer)}</div></div><div class="ocard-price">${own.has(g._id) ? 'In library' : 'Free'}</div></div>
     </a>`;
   }
@@ -340,7 +350,7 @@
       <div class="section-head"><div class="section-title">${title}</div><div class="section-sub">${plural(list.length, 'game')}</div>${q || genre ? '<div class="spacer"></div><a class="section-link" href="#/store/browse">Clear</a>' : ''}</div>
       ${S.games.length ? `<div class="chips">${genres(S.games).map(gn => `<a class="chip lg${genre === gn ? ' on' : ''}" href="${chipHref(gn)}">${esc(gn)}</a>`).join('')}</div>` : ''}
       ${list.length ? `<div class="grid8">${list.map(g => `<a class="scard" href="#/game/${g._id}">
-          <div class="cover" style="background:${art.cover(g.title)}"><div class="cover-name">${esc(g.title)}</div>${own.has(g._id) ? '<div class="inst-dot"></div>' : ''}</div>
+          <div class="cover${hasArt(g)}" style="background:${art.cover(g)}"><div class="cover-name">${esc(g.title)}</div>${own.has(g._id) ? '<div class="inst-dot"></div>' : ''}</div>
           <div class="scard-foot"><div>${esc(g.genre)}${g.releaseYear ? ` · ${g.releaseYear}` : ''}</div><div>${own.has(g._id) ? 'Owned' : 'Free'}</div></div>
         </a>`).join('')}</div>`
         : S.games.length ? noMatch('No games match. Try another search or tag.') : emptyCatalogue()}
@@ -361,11 +371,10 @@
       </div>
       <div class="ggrid">
         <div class="group">
-          <div class="trailer"><div style="display:flex;flex-direction:column;align-items:center;gap:12px"><div class="trailer-play"><div></div></div><div style="font:11px var(--mono);color:var(--dim)">trailer</div></div></div>
-          <div class="thumbs"><div></div><div></div><div></div><div></div><div></div></div>
+          ${mediaViewer(g)}
         </div>
         <div class="stack" style="gap:14px">
-          <div class="gart cover" style="background:${art.wide(g.title)}"><div class="cover-name">${t}</div></div>
+          <div class="gart cover${hasArt(g, 'header')}" style="background:${art.wide(g)}"><div class="cover-name">${t}</div></div>
           <p class="prose-sm">${esc(about(g))}</p>
           <div class="kv plain"><div>Developer</div><div>${esc(g.developer)}</div><div>Genre</div><div>${esc(g.genre)}</div><div>Released</div><div>${g.releaseYear ?? '—'}</div></div>
           <div class="tags">${tagChips(g, 'tag')}</div>
@@ -380,6 +389,59 @@
     </div></div>`;
   }
 
+  // Game page trailer + screenshot viewer. Item 0 is the trailer when there is one.
+  function mediaItems(g) {
+    const items = (g.screenshots || []).map(sh => ({ kind: 'shot', ...sh }));
+    if (g.trailer) items.unshift({ kind: 'trailer', thumb: g.screenshots?.[0]?.thumb || g.trailer.thumbnail, full: g.screenshots?.[0]?.full || g.trailer.thumbnail });
+    return items;
+  }
+  function mediaViewer(g) {
+    if (S.media?.gameId !== g._id) S.media = { gameId: g._id, i: 0, playing: false };
+    const items = mediaItems(g);
+    const ytLink = `<a class="section-link" href="${youtube(g)}" target="_blank" rel="noopener">Watch on YouTube ↗</a>`;
+    if (!items.length) return `<div class="trailer"><div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+        <a class="trailer-play" href="${youtube(g)}" target="_blank" rel="noopener" aria-label="Watch the trailer on YouTube"><div></div></a>
+        <div style="font:11px var(--mono);color:var(--dim)">trailer on YouTube ↗</div></div></div>
+      <div class="thumbs"><div></div><div></div><div></div><div></div><div></div></div>`;
+    const i = Math.min(S.media.i, items.length - 1), cur = items[i];
+    let main;
+    if (cur.kind === 'trailer' && S.media.playing) main = `<div id="trailer-slot" data-src="${esc(g.trailer.hls)}" data-poster="${esc(cur.full)}"></div>`;
+    else if (cur.kind === 'trailer') main = `<button class="media-poster" style="background:${art.shot(cur.full)}" data-act="play-trailer" aria-label="Play trailer: ${esc(g.trailer.name)}"><div class="trailer-play"><div></div></div><div class="media-caption">${esc(g.trailer.name)}</div></button>`;
+    else main = `<a href="${esc(cur.full)}" target="_blank" rel="noopener" aria-label="Open full-size screenshot"><img src="${esc(cur.full)}" alt="${esc(g.title)} screenshot"></a>`;
+    return `<div class="media-main">${main}</div>
+      <div class="thumbs">${items.map((it, n) => `<button class="${n === i ? 'on' : ''}" style="background:${art.shot(it.thumb)}" data-act="media" data-id="${g._id}" data-v="${n}" aria-label="${it.kind === 'trailer' ? 'Trailer' : `Screenshot ${n}`}" aria-pressed="${n === i}">${it.kind === 'trailer' ? '<span class="thumb-play"></span>' : ''}</button>`).join('')}</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--dim)"><span>${g.trailer ? `Trailer and screenshots from Steam` : 'Screenshots from Steam'}</span>${ytLink}</div>`;
+  }
+
+  // Steam trailers are HLS streams: Safari plays them natively, other browsers via hls.js.
+  let hlsLoading;
+  function loadHls() {
+    return hlsLoading ||= new Promise((resolve, reject) => {
+      const el = document.createElement('script');
+      el.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js';
+      el.onload = () => resolve(window.Hls);
+      el.onerror = () => { hlsLoading = null; reject(new Error('Couldn’t load the video player')); };
+      document.head.appendChild(el);
+    });
+  }
+  async function mountTrailer(slot) {
+    const v = document.createElement('video');
+    Object.assign(v, { id: 'trailer-video', controls: true, playsInline: true, poster: slot.dataset.poster, className: 'trailer-video' });
+    v.dataset.src = slot.dataset.src;
+    slot.replaceWith(v);
+    try {
+      if (v.canPlayType('application/vnd.apple.mpegurl')) v.src = v.dataset.src;
+      else {
+        const Hls = await loadHls();
+        if (!Hls.isSupported()) throw new Error('This browser can’t play the trailer');
+        v._hls = new Hls();
+        v._hls.loadSource(v.dataset.src);
+        v._hls.attachMedia(v);
+      }
+      v.play().catch(() => {}); // autoplay can be blocked; the controls still work
+    } catch (err) { toast(`${err.message}. Try “Watch on YouTube”.`, true); }
+  }
+
   // ---------- downloads ----------
   function downloadsPage() {
     const inst = S.entries.filter(e => e.installed).sort(byTitle);
@@ -388,7 +450,7 @@
       <div class="shelf">
         <div class="section-head"><div class="section-title">Installed</div><div class="section-sub">${plural(inst.length, 'game')}</div></div>
         <div class="panel">${inst.map(e => `<div class="prow">
-            <div class="row-cover" style="background:${art.cover(e.game.title)}"></div>
+            <div class="row-cover" style="background:${art.cover(e.game)}"></div>
             <div class="prow-text"><a class="prow-title" href="#/game/${e.game._id}">${esc(e.game.title)}</a><div class="prow-sub">${esc(e.game.genre)} · ${playtime(e)} played</div></div>
             ${playBtn(e, 'btn xs btn-primary')}
             <button class="btn xs btn-ghost" data-act="uninstall" data-id="${e._id}">Uninstall</button>
@@ -457,7 +519,7 @@
     if (!g) return '';
     return `<div class="overlay" data-act="modal-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
       <div class="modal-head">
-        <div class="modal-cover" style="background:${art.cover(g.title)}"></div>
+        <div class="modal-cover" style="background:${art.cover(g)}"></div>
         <div style="display:flex;flex-direction:column;gap:3px"><div class="kicker">Added to your library</div><div class="modal-title" id="m-title">${esc(g.title)}</div><div class="modal-sub">${esc(g.developer)} · ${esc(g.genre)}</div></div>
         <button class="modal-x" data-act="modal-skip" aria-label="Close">×</button>
       </div>
@@ -521,12 +583,20 @@
     const focus = a?.id ? { sel: '#' + CSS.escape(a.id), start: a.selectionStart, end: a.selectionEnd }
       : a?.dataset?.act ? { sel: ['act', 'id', 'v', 'k'].filter(k => a.dataset[k] !== undefined).map(k => `[data-${k}="${CSS.escape(a.dataset[k])}"]`).join('') } : null;
     document.querySelectorAll('[data-keep-scroll]').forEach(el => scrolls.set(location.hash + '|' + el.dataset.keepScroll, el.scrollTop));
+    const video = $('trailer-video');
 
     let page;
     if (S.error) page = `<div class="page" style="display:flex"><div class="empty"><div class="empty-title">Can’t reach Hydro</div><div class="empty-sub">${esc(S.error)}</div><button class="btn btn-primary big" data-act="retry">Try again</button></div></div>`;
     else page = S.loaded ? (PAGES[r.name] || PAGES.library)(r) : '';
     $('app').innerHTML = `<div class="app">${topbar(ACTIVE[r.name] || 'library', r)}<main class="main">${page}</main></div>`;
     $('layer').innerHTML = S.dialog ? confirmDialog() : S.modal ? addModal() : '';
+
+    const slot = $('trailer-slot');
+    if (slot && video && video.dataset.src === slot.dataset.src) slot.replaceWith(video);
+    else {
+      if (video) { video.pause(); video._hls?.destroy(); }
+      if (slot) mountTrailer(slot);
+    }
 
     document.querySelectorAll('[data-keep-scroll]').forEach(el => { el.scrollTop = scrolls.get(location.hash + '|' + el.dataset.keepScroll) || 0; });
     // With a dialog open, focus stays inside it.
@@ -579,6 +649,14 @@
     pref: d => { prefs[d.k] = !prefs[d.k]; savePrefs(); render(); },
     menu: d => { S.menu = S.menu === d.id ? null : d.id; render(); },
     open: d => { S.menu = null; location.hash = '#/game/' + d.id; },
+    media: d => { S.media = { gameId: d.id, i: +d.v, playing: false }; location.hash === '#/game/' + d.id ? render() : (location.hash = '#/game/' + d.id); },
+    trailer: d => {
+      const g = gameById(d.id);
+      if (!g?.trailer) return void window.open(youtube(g), '_blank', 'noopener');
+      S.media = { gameId: d.id, i: 0, playing: true };
+      location.hash = '#/game/' + d.id;
+    },
+    'play-trailer': () => { S.media.playing = true; render(); },
     golib: d => { Object.assign(S, { selectedId: d.id, filter: 'all', genre: null, query: '' }); location.hash = '#/library'; },
 
     play: d => run(async () => {

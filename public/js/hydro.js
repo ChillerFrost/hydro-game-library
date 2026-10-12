@@ -53,10 +53,16 @@ const Hydro = (() => {
   }
   const grad = (h, a) => `repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 6px,transparent 6px 14px),linear-gradient(${a}deg,hsl(${h} 52% 36%),hsl(${h + 25} 60% 13%))`;
   const hero = h => `linear-gradient(0deg,#0b0e13 0%,rgba(11,14,19,0) 60%),linear-gradient(90deg,rgba(11,14,19,.55),rgba(11,14,19,0) 55%),repeating-linear-gradient(135deg,rgba(255,255,255,.03) 0 10px,transparent 10px 24px),linear-gradient(165deg,hsl(${h} 50% 34%),hsl(${h + 25} 60% 12%))`;
+  // Each takes a game (or a bare title). Real art from Steam is layered over the
+  // gradient, so a missing or broken image still shows the placeholder.
+  const titleOf = g => (typeof g === 'string' ? g : g.title);
+  const img = url => (url ? `url('${url}') center/cover no-repeat,` : '');
+  const shade = 'linear-gradient(0deg,#0b0e13 0%,rgba(11,14,19,0) 60%),linear-gradient(90deg,rgba(11,14,19,.55),rgba(11,14,19,0) 55%),';
   const art = {
-    cover: title => grad(hue(title), 165),
-    wide: title => grad(hue(title), 110),
-    hero: title => hero(hue(title)),
+    cover: g => img(g.cover) + grad(hue(titleOf(g)), 165),
+    wide: g => img(g.header) + grad(hue(titleOf(g)), 110),
+    hero: g => (g.hero ? shade + img(g.hero) : '') + hero(hue(titleOf(g))),
+    shot: url => `url('${url}') center/cover no-repeat,var(--stripes)`,
   };
 
   return { getUser, setUser, clearUser, api, esc, art };
