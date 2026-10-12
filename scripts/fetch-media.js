@@ -1,6 +1,7 @@
 // Looks up every catalogue game on the Steam store and writes data/media.json
 // (cover art, banner, hero, screenshots, trailer, short description).
-// Run once after changing data/games.js:  node scripts/fetch-media.js
+// Run after changing data/games.js:  node scripts/fetch-media.js
+// Only games missing from media.json are fetched; pass --all to refresh every game.
 const fs = require('fs');
 const path = require('path');
 const games = require('../data/games');
@@ -13,6 +14,8 @@ const APP_IDS = {
   'Death Stranding': 1850570, // Director's Cut
   'Overwatch 2': 2357570,
   'Rocket League': 252950,
+  'Football Manager 2024': 2252570,
+  'Northgard': 466560,
   'The Elder Scrolls V: Skyrim': 489830, // Special Edition (original is delisted)
   "Uncharted 4: A Thief's End": 1659420, // Legacy of Thieves Collection
   'DOOM': 379720,
@@ -55,8 +58,11 @@ async function findAppId(title) {
 }
 
 (async () => {
+  const refreshAll = process.argv.includes('--all');
+  const old = !refreshAll && fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : {};
   const media = {};
   for (const { title } of games) {
+    if (old[title]) { media[title] = old[title]; continue; } // already fetched
     const id = await findAppId(title);
     if (!id) { console.log(`--  ${title}: not found on Steam`); continue; }
     const res = await getJSON(`https://store.steampowered.com/api/appdetails?appids=${id}&l=english`);

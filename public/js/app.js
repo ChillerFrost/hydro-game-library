@@ -16,6 +16,7 @@
     games: [], entries: [], collections: [], loaded: false, error: null,
     selectedId: null, filter: 'all', genre: null, collection: null, query: '', sort: 'recent', shelf: 'all',
     menu: null, modal: null, dialog: null, prompt: null, editor: null,
+    suggest: null, // top search dropdown: { q, results, i }
   };
 
   // ---------- formatting ----------
@@ -114,7 +115,11 @@
       <a class="brand" href="#/library"><div class="logo-mark"></div><div class="brand-name">Hydro</div></a>
       <nav class="nav" aria-label="Main">${tabs.map(([k, l]) => `<a href="#/${k}"${active === k ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
       <div class="spacer"></div>
-      <form class="search" data-submit="search" role="search"><span class="search-icon"></span><input id="top-search" name="q" value="${esc(q)}" placeholder="${active === 'store' ? 'Search the store' : 'Search'}" aria-label="Search the store"></form>
+      <form class="search search-wrap" data-submit="search" role="search"><span class="search-icon"></span>
+        <input id="top-search" name="q" value="${esc(S.suggest ? S.suggest.q : q)}" placeholder="Search the store" aria-label="Search the store" autocomplete="off" data-in="suggest"
+          role="combobox" aria-autocomplete="list" aria-controls="suggest-list" aria-expanded="${!!S.suggest?.results}"${S.suggest?.i >= 0 ? ` aria-activedescendant="sg-${S.suggest.i}"` : ''}>
+        ${suggestions()}
+      </form>
       <div class="menu-wrap">
         <button class="me${active === 'settings' || S.menu === 'account' ? ' on' : ''}" data-act="menu" data-id="account" aria-haspopup="menu" aria-expanded="${S.menu === 'account'}"><div class="avatar"></div><div class="me-name">${esc(user.username)}</div><div class="caret"></div></button>
         ${S.menu === 'account' ? `<div class="menu" role="menu">
@@ -126,6 +131,45 @@
       </div>
     </header>`;
   }
+
+  // Live results under the top search box, closest match first, with covers.
+  function suggestions() {
+    const sg = S.suggest;
+    if (!sg?.results) return '';
+    const own = ownedMap();
+    const qn = sg.q.trim().toLowerCase();
+    const mark = title => {
+      const at = qn ? title.toLowerCase().indexOf(qn) : -1;
+      return at < 0 ? esc(title) : `${esc(title.slice(0, at))}<mark>${esc(title.slice(at, at + qn.length))}</mark>${esc(title.slice(at + qn.length))}`;
+    };
+    const all = '#/store/browse?q=' + encodeURIComponent(sg.q.trim());
+    return `<div class="suggest" id="suggest-list" role="listbox" aria-label="Search results">
+      ${sg.results.map((g, n) => `<a id="sg-${n}" class="sg-row${n === sg.i ? ' on' : ''}" role="option" aria-selected="${n === sg.i}" href="#/game/${g._id}">
+          <div class="sg-cover" style="background:${art.cover(g)}"></div>
+          <div class="sg-text"><div class="sg-title">${mark(g.title)}</div><div class="sg-sub">${esc(g.genre)} · ${esc(g.developer)}${g.releaseYear ? ` · ${g.releaseYear}` : ''}</div></div>
+          ${own.has(g._id) ? '<span class="sg-owned">Owned</span>' : ''}
+        </a>`).join('') || `<div class="sg-empty">No games match “${esc(sg.q.trim())}”</div>`}
+      ${sg.results.length ? `<a class="sg-all" href="${all}">See all results for “${esc(sg.q.trim())}” →</a>` : ''}
+    </div>`;
+  }
+
+  let suggestSeq = 0, suggestTimer;
+  function updateSuggest(value) {
+    const q = value.trim();
+    S.suggest = { q: value, results: S.suggest?.results || null, i: -1 };
+    clearTimeout(suggestTimer);
+    if (!q) { S.suggest.results = null; return render(); }
+    render();
+    const seq = ++suggestSeq;
+    suggestTimer = setTimeout(async () => {
+      let results;
+      try { results = await api('/games?limit=8&q=' + encodeURIComponent(q)); } catch { results = HydroSearch.search(S.games, q, 8); }
+      if (seq !== suggestSeq || !S.suggest) return; // a newer keystroke won
+      S.suggest.results = results;
+      render();
+    }, 120);
+  }
+  const closeSuggest = () => { if (S.suggest?.results) { S.suggest.results = null; S.suggest.i = -1; render(); } };
 
   // ---------- library ----------
   function filterChips(withCounts) {
@@ -343,6 +387,9 @@
     const f = newest.find(g => !own.has(g._id)) || newest[0];
     const recent = newest.filter(g => g._id !== f._id).slice(0, 4);
     return `<div class="col" data-keep-scroll="store">${storeNav('featured')}<div class="pad" style="padding-top:22px">
+      <div class="shelf"><div class="section-title">Browse by tag</div>
+        <div class="chips">${genres(S.games).map(gn => `<a class="tagbtn" href="#/store/browse?genre=${encodeURIComponent(gn)}">${esc(gn)}</a>`).join('')}<a class="tagbtn" href="#/store/browse" style="background:none;border-color:transparent;color:var(--accent)">All games →</a></div>
+      </div>
       <div class="feature">
         <a class="feature-art" href="#/game/${f._id}" style="background:${art.hero(f)}"><div class="feature-kicker">Featured</div><div class="hero-text"><div class="hero-studio">${esc(f.developer)}</div><div class="hero-name">${esc(f.title)}</div></div></a>
         <div class="feature-side">
@@ -357,10 +404,46 @@
         <div class="section-head"><div class="section-title">New releases</div><div class="section-sub">The latest games in the store</div><div class="spacer"></div><a class="section-link" href="#/store/browse?sort=new">See all</a></div>
         <div class="grid4">${recent.map(g => offerCard(g, own)).join('')}</div>
       </div>` : ''}
-      <div class="shelf"><div class="section-title">Browse by tag</div>
-        <div class="chips">${genres(S.games).map(gn => `<a class="tagbtn" href="#/store/browse?genre=${encodeURIComponent(gn)}">${esc(gn)}</a>`).join('')}<a class="tagbtn" href="#/store/browse" style="background:none;border-color:transparent;color:var(--accent)">All games →</a></div>
-      </div>
+      ${genreRows(own)}
     </div></div>`;
+  }
+
+  function storeCard(g, own, sub = `${esc(g.genre)}${g.releaseYear ? ` · ${g.releaseYear}` : ''}`) {
+    return `<a class="scard" href="#/game/${g._id}">
+      <div class="cover${hasArt(g)}" style="background:${art.cover(g)}"><div class="cover-name">${esc(g.title)}</div>${own.has(g._id) ? '<div class="inst-dot"></div>' : ''}</div>
+      <div class="scard-foot"><div>${sub}</div><div>${own.has(g._id) ? 'Owned' : 'Free'}</div></div>
+    </a>`;
+  }
+
+  // Store rows below New releases: picks from the genres you own most, then one row per genre.
+  function genreRows(own) {
+    const head = (title, sub, href) => `<div class="section-head"><div class="section-title">${title}</div><div class="section-sub">${sub}</div><div class="spacer"></div><a class="section-link" href="${href}">See all</a></div>`;
+    const row = list => `<div class="srow">${list.map(g => storeCard(g, own, esc(g.developer))).join('')}</div>`;
+    const newestFirst = (a, b) => (b.releaseYear || 0) - (a.releaseYear || 0) || byTitle(a, b);
+    let html = '';
+
+    // Recommended: unowned games from the library's top two genres.
+    const counts = {};
+    S.entries.forEach(e => { counts[e.game.genre] = (counts[e.game.genre] || 0) + 1; });
+    const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b)).slice(0, 2);
+    const picks = S.games.filter(g => top.includes(g.genre) && !own.has(g._id)).sort(newestFirst).slice(0, 10);
+    if (picks.length) {
+      const why = top.map(gn => `${plural(counts[gn], 'game')} in ${esc(gn)}`).join(' and ');
+      html += `<div class="shelf">${head('Recommended for you', `Because you have ${why}`, '#/store/browse?genre=' + encodeURIComponent(top[0]))}${row(picks)}</div>`;
+    }
+
+    // One row per genre with enough games, biggest genres first; unowned games lead.
+    const byGenre = {};
+    S.games.forEach(g => { (byGenre[g.genre] ||= []).push(g); });
+    Object.entries(byGenre)
+      .filter(([, list]) => list.length >= 4)
+      .sort(([a, x], [b, y]) => y.length - x.length || a.localeCompare(b))
+      .forEach(([gn, list]) => {
+        const sorted = [...list].sort((a, b) => own.has(a._id) - own.has(b._id) || newestFirst(a, b)).slice(0, 10);
+        const owned = list.filter(g => own.has(g._id)).length;
+        html += `<div class="shelf">${head(esc(gn), `${plural(list.length, 'game')}${owned ? ` · ${owned} in your library` : ''}`, '#/store/browse?genre=' + encodeURIComponent(gn))}${row(sorted)}</div>`;
+      });
+    return html;
   }
 
   function offerCard(g, own) {
@@ -373,8 +456,9 @@
   function browsePage(p) {
     const q = (p.get('q') || '').trim(), genre = p.get('genre'), newest = p.get('sort') === 'new';
     const own = ownedMap();
-    let list = S.games.filter(g => (!genre || g.genre === genre) && (!q || g.title.toLowerCase().includes(q.toLowerCase())));
-    list = newest
+    let list = S.games.filter(g => !genre || g.genre === genre);
+    if (q) list = HydroSearch.search(list, q); // closest match first
+    else list = newest
       ? [...list].sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0) || byTitle(a, b))
       : [...list].sort(byTitle);
     const title = q ? `Results for “${esc(q)}”` : genre ? esc(genre) : newest ? 'New releases' : 'All games';
@@ -383,10 +467,7 @@
     return `<div class="col" data-keep-scroll="browse">${storeNav(tab)}<div class="pad" style="gap:16px">
       <div class="section-head"><div class="section-title">${title}</div><div class="section-sub">${plural(list.length, 'game')}</div>${q || genre ? '<div class="spacer"></div><a class="section-link" href="#/store/browse">Clear</a>' : ''}</div>
       ${S.games.length ? `<div class="chips">${genres(S.games).map(gn => `<a class="chip lg${genre === gn ? ' on' : ''}" href="${chipHref(gn)}">${esc(gn)}</a>`).join('')}</div>` : ''}
-      ${list.length ? `<div class="grid8">${list.map(g => `<a class="scard" href="#/game/${g._id}">
-          <div class="cover${hasArt(g)}" style="background:${art.cover(g)}"><div class="cover-name">${esc(g.title)}</div>${own.has(g._id) ? '<div class="inst-dot"></div>' : ''}</div>
-          <div class="scard-foot"><div>${esc(g.genre)}${g.releaseYear ? ` · ${g.releaseYear}` : ''}</div><div>${own.has(g._id) ? 'Owned' : 'Free'}</div></div>
-        </a>`).join('')}</div>`
+      ${list.length ? `<div class="grid8">${list.map(g => storeCard(g, own)).join('')}</div>`
         : S.games.length ? noMatch('No games match. Try another search or tag.') : emptyCatalogue()}
     </div></div>`;
   }
@@ -837,6 +918,8 @@
 
   const SUBMIT = {
     search: form => {
+      const sg = S.suggest;
+      if (sg?.results && sg.i >= 0 && sg.results[sg.i]) return void (location.hash = '#/game/' + sg.results[sg.i]._id);
       const q = form.q.value.trim();
       location.hash = '#/store/browse' + (q ? '?q=' + encodeURIComponent(q) : '');
     },
@@ -854,6 +937,7 @@
 
   document.addEventListener('click', ev => {
     const el = ev.target.closest('[data-act]');
+    if (S.suggest?.results && !ev.target.closest('.search-wrap')) closeSuggest();
     if (S.menu && !ev.target.closest('.menu-wrap')) { S.menu = null; if (!el) return render(); }
     if (!el || !ACT[el.dataset.act]) return;
     // Overlay backdrops wrap forms; letting those clicks through keeps submit buttons working.
@@ -862,6 +946,7 @@
   });
   document.addEventListener('input', ev => {
     if (ev.target.dataset.in === 'query') { S.query = ev.target.value; render(); }
+    if (ev.target.dataset.in === 'suggest') updateSuggest(ev.target.value);
   });
   document.addEventListener('change', ev => {
     if (ev.target.dataset.change === 'sort') { S.sort = ev.target.value; render(); }
@@ -871,6 +956,18 @@
     if (SUBMIT[k]) { ev.preventDefault(); SUBMIT[k](ev.target); }
   });
   document.addEventListener('keydown', ev => {
+    const sg = S.suggest;
+    if (ev.target.id === 'top-search' && sg?.results) {
+      const n = sg.results.length;
+      if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        // Cycle through the results; stepping past either end returns to the typed text (-1).
+        const next = sg.i + (ev.key === 'ArrowDown' ? 1 : -1);
+        sg.i = next >= n ? -1 : next < -1 ? n - 1 : next;
+        return render();
+      }
+      if (ev.key === 'Escape') return closeSuggest();
+    }
     if (ev.key !== 'Escape') return;
     if (S.dialog) ACT['dialog-cancel']();
     else if (S.prompt) ACT['prompt-cancel']();
@@ -878,7 +975,8 @@
     else if (S.modal) finishModal(false, false);
     else if (S.menu) { S.menu = null; render(); }
   });
-  window.addEventListener('hashchange', () => { S.menu = null; render(); });
+  document.addEventListener('focusin', ev => { if (S.suggest?.results && !ev.target.closest('.search-wrap')) closeSuggest(); });
+  window.addEventListener('hashchange', () => { S.menu = null; S.suggest = null; render(); });
 
   render();
   load().then(render);

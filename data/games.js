@@ -127,4 +127,83 @@ module.exports = [
   // Fighting
   ['Street Fighter 6', 'Capcom', 'Fighting', 2023],
   ['Tekken 8', 'Bandai Namco', 'Fighting', 2024],
+
+  // ---- Added: second batch ----
+  // Racing
+  ['Forza Motorsport', 'Turn 10 Studios', 'Racing', 2023],
+  ['Need for Speed Heat', 'Ghost Games', 'Racing', 2019],
+  ['DiRT Rally 2.0', 'Codemasters', 'Racing', 2019],
+  ['EA Sports WRC', 'Codemasters', 'Racing', 2023],
+  ['Wreckfest', 'Bugbear Entertainment', 'Racing', 2018],
+  ['BeamNG.drive', 'BeamNG', 'Racing', 2015],
+
+  // Fighting
+  ['Mortal Kombat 11', 'NetherRealm Studios', 'Fighting', 2019],
+  ['Guilty Gear -Strive-', 'Arc System Works', 'Fighting', 2021],
+  ['Dragon Ball FighterZ', 'Arc System Works', 'Fighting', 2018],
+  ['Soulcalibur VI', 'Bandai Namco', 'Fighting', 2018],
+  ['Brawlhalla', 'Blue Mammoth Games', 'Fighting', 2017],
+
+  // Sports
+  ['Football Manager 2024', 'Sports Interactive', 'Sports', 2023],
+  ['Golf With Your Friends', 'Blacklight Interactive', 'Sports', 2020],
+  ['Riders Republic', 'Ubisoft Annecy', 'Sports', 2021],
+  ['OlliOlli World', 'Roll7', 'Sports', 2022],
+  ['Session: Skate Sim', 'crea-ture Studios', 'Sports', 2022],
+
+  // Action
+  ['Hi-Fi Rush', 'Tango Gameworks', 'Action', 2023],
+  ['Sifu', 'Sloclap', 'Action', 2022],
+  ['Armored Core VI: Fires of Rubicon', 'FromSoftware', 'Action', 2023],
+  ['Lies of P', 'Round8 Studio', 'Action', 2023],
+
+  // RPG
+  ['Starfield', 'Bethesda Game Studios', 'RPG', 2023],
+  ['Kingdom Come: Deliverance', 'Warhorse Studios', 'RPG', 2018],
+  ['Pillars of Eternity II: Deadfire', 'Obsidian Entertainment', 'RPG', 2018],
+
+  // Shooter
+  ['Deep Rock Galactic', 'Ghost Ship Games', 'Shooter', 2020],
+  ['Team Fortress 2', 'Valve', 'Shooter', 2007],
+  ['Halo: The Master Chief Collection', '343 Industries', 'Shooter', 2019],
+  ['Helldivers 2', 'Arrowhead Game Studios', 'Shooter', 2024],
+
+  // Strategy
+  ['Frostpunk', '11 bit studios', 'Strategy', 2018],
+  ['Hearts of Iron IV', 'Paradox Development Studio', 'Strategy', 2016],
+  ['Northgard', 'Shiro Games', 'Strategy', 2018],
+
+  // Simulation
+  ['Two Point Hospital', 'Two Point Studios', 'Simulation', 2018],
+  ['Satisfactory', 'Coffee Stain Studios', 'Simulation', 2024],
+  ['Jurassic World Evolution 2', 'Frontier Developments', 'Simulation', 2021],
+
+  // Adventure
+  ['Tunic', 'Andrew Shouldice', 'Adventure', 2022],
+  ['Hogwarts Legacy', 'Avalanche Software', 'Adventure', 2023],
+  ['Stray', 'BlueTwelve Studio', 'Adventure', 2022],
+  ['Sea of Thieves', 'Rare', 'Adventure', 2018],
+
+  // Horror
+  ['Little Nightmares', 'Tarsier Studios', 'Horror', 2017],
+  ['SOMA', 'Frictional Games', 'Horror', 2015],
+  ['Lethal Company', 'Zeekerss', 'Horror', 2023],
+
+  // Survival
+  ['Sons of the Forest', 'Endnight Games', 'Survival', 2024],
+  ['Raft', 'Redbeet Interactive', 'Survival', 2022],
+  ['Grounded', 'Obsidian Entertainment', 'Survival', 2022],
+
+  // Roguelike
+  ['Balatro', 'LocalThunk', 'Roguelike', 2024],
+  ['Enter the Gungeon', 'Dodge Roll', 'Roguelike', 2016],
+  ['Noita', 'Nolla Games', 'Roguelike', 2020],
+
+  // Platformer
+  ['Rayman Legends', 'Ubisoft Montpellier', 'Platformer', 2013],
+  ['Super Meat Boy', 'Team Meat', 'Platformer', 2010],
+
+  // Puzzle
+  ['The Talos Principle', 'Croteam', 'Puzzle', 2014],
+  ['Superliminal', 'Pillow Castle', 'Puzzle', 2019],
 ].map(([title, developer, genre, releaseYear]) => ({ title, developer, genre, releaseYear }));
