@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"><style>body{margin:0;background:#e9e8e4;font-family:system-ui,sans-serif}a{color:#1a1a1a}a:hover{color:#2a78d6}.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}.dv-sub{font:600 11px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.45);margin:34px 0 14px}.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}.dv-card{max-width:100%;background:#0b0e13;border:1px solid rgba(0,0,0,.25);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden}.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}.dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}.dv-intro{max-width:720px;font:13px/1.55 system-ui,sans-serif;color:rgba(0,0,0,.65);margin:0 0 28px;display:flex;flex-direction:column;gap:6px}.dv-intro b{color:#1a1a1a;font-weight:600}</style></helmet>
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Hydro — game library web app</span></div>
+<div class="dv-intro">
+<div><b>Assumptions.</b> Browser web app at 1440×900; static mock; games come from a curated Hydro catalogue; library features shown are install/play state, collections &amp; tags, search &amp; filters. Steam was the reference for scope, but the visuals are original: deep charcoal surfaces, a single aqua accent (Hydro), Sora for display type, IBM Plex Sans for UI.</div>
+<div><b>Reasoning.</b> Three library layouts differ on one axis — how much the selected game dominates: <a class="dv-oid" href="#1a">1a</a> list + always-visible detail (fast switching), <a class="dv-oid" href="#1b">1b</a> cover grid (browsing a big library), <a class="dv-oid" href="#1c">1c</a> shelves grouped by state and collection (surfaces what to play next). Supporting screens below share the same nav and components so any option plugs in.</div>
+<div><b>Placeholders.</b> Cover art and screenshots are striped/gradient placeholders with fictional titles — drop real images in later.</div>
+</div>
+<div class="dv-sub">Library layouts</div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a"><div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Split view — game list + persistent detail panel</div>
+<div class="dv-card" style="width:1440px"><div style="width:1440px;height:900px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0b0e13;color:#e8edf3;font-family:'IBM Plex Sans',system-ui,sans-serif">
+<div style="height:56px;flex:none;display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:22px;height:22px;border-radius:0 50% 50% 50%;transform:rotate(45deg);background:#3fd0c9"></div><div style="font:700 17px Sora,sans-serif;letter-spacing:.2px">Hydro</div></div>
+<div style="display:flex;gap:4px"><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Store</div><div style="padding:7px 12px;font-size:14px;font-weight:600;color:#e8edf3;background:#1a212c;border-radius:6px">Library</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Downloads</div></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px;width:260px;height:34px;padding:0 12px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);color:#5f6b7a;font-size:13px"><div style="width:11px;height:11px;border:2px solid #5f6b7a;border-radius:50%"></div>Search</div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3fd0c9,#6b5bd6)"></div><div style="font-size:13.5px;font-weight:500">ava_k</div></div>
+</div>
+<div style="flex:1;display:flex;min-height:0">
+<div style="width:300px;flex:none;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.07);background:#0e1218">
+<div style="padding:14px 14px 8px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);color:#5f6b7a;font-size:13px"><div style="width:11px;height:11px;border:2px solid #5f6b7a;border-radius:50%"></div>Search library</div>
+<div style="display:flex;gap:6px"><div style="padding:5px 11px;border-radius:999px;background:#3fd0c9;color:#06201f;font-size:12px;font-weight:600">All</div><div style="padding:5px 11px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12px;color:#c3ccd6">Installed</div><div style="padding:5px 11px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12px;color:#c3ccd6">Favorites</div></div>
+</div>
+<div style="flex:1;overflow:hidden;padding:4px 8px;display:flex;flex-direction:column;gap:2px">
+<div style="padding:10px 8px 6px;font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">Favorites</div>
+<sc-for list="{{ favs }}" as="g" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;background: {{ g.rowBg }};color: {{ g.rowColor }}"><div style="width:26px;height:34px;border-radius:3px;flex:none;background: {{ g.cover }}"></div><div style="flex:1;min-width:0;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.name }}</div><div style="width:6px;height:6px;border-radius:50%;background: {{ g.dot }}"></div></div>
+</sc-for>
+<div style="padding:14px 8px 6px;font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">All games · {{ games.length }}</div>
+<sc-for list="{{ games }}" as="g" hint-placeholder-count="12">
+<div style="display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;background: {{ g.rowBg }};color: {{ g.rowColor }}" style-hover="background:#161c25"><div style="width:26px;height:34px;border-radius:3px;flex:none;background: {{ g.cover }}"></div><div style="flex:1;min-width:0;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.name }}</div><div style="width:6px;height:6px;border-radius:50%;background: {{ g.dot }}"></div></div>
+</sc-for>
+</div>
+<div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:#5f6b7a;display:flex;justify-content:space-between"><div>{{ count }}</div><div style="color:#3fd0c9">Manage</div></div>
+</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">
+<div style="height:320px;flex:none;position:relative;background: {{ sel.hero }}">
+<div style="position:absolute;left:36px;bottom:26px;display:flex;flex-direction:column;gap:6px"><div style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#aeb9c6">{{ sel.studio }}</div><div style="font:700 46px/1 Sora,sans-serif;letter-spacing:-.5px;text-shadow:0 2px 20px rgba(0,0,0,.4)">{{ sel.name }}</div></div>
+</div>
+<div style="padding:18px 36px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="display:flex;align-items:center;gap:10px;height:44px;padding:0 26px;border-radius:8px;background:#3fd0c9;color:#06201f;font:600 15px Sora,sans-serif"><div style="width:0;height:0;border-left:11px solid #06201f;border-top:7px solid transparent;border-bottom:7px solid transparent"></div>{{ sel.playLabel }}</div>
+<div style="height:44px;padding:0 16px;border-radius:8px;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;font-size:13.5px;font-weight:500">Add to collection</div>
+<div style="height:44px;padding:0 16px;border-radius:8px;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;font-size:13.5px;font-weight:500">Favorite</div>
+<div style="height:44px;width:44px;border-radius:8px;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px;color:#8d9aab;letter-spacing:1px">···</div>
+<div style="flex:1"></div>
+<div style="display:flex;gap:36px">
+<div style="display:flex;flex-direction:column;gap:3px"><div style="font:600 10.5px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">Last played</div><div style="font-size:15px;font-weight:600">{{ sel.last }}</div></div>
+<div style="display:flex;flex-direction:column;gap:3px"><div style="font:600 10.5px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">Playtime</div><div style="font-size:15px;font-weight:600">{{ sel.playtime }}</div></div>
+<div style="display:flex;flex-direction:column;gap:3px"><div style="font:600 10.5px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">Status</div><div style="font-size:15px;font-weight:600">{{ sel.status }}</div></div>
+</div>
+</div>
+<div style="padding:26px 36px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:40px">
+<div style="display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">About</div><div style="font-size:14.5px;line-height:1.55;color:#c3ccd6;max-width:640px;text-wrap:pretty">{{ sel.desc }}</div></div>
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">Tags</div><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ sel.tags }}" as="t" hint-placeholder-count="3"><div style="padding:5px 11px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12px;color:#c3ccd6">{{ t }}</div></sc-for></div></div>
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">Screenshots</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div style="aspect-ratio:16/9;border-radius:8px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px);border:1px solid rgba(255,255,255,.07);display:grid;place-items:center;font:11px ui-monospace,Menlo,monospace;color:#5f6b7a">screenshot 1</div><div style="aspect-ratio:16/9;border-radius:8px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px);border:1px solid rgba(255,255,255,.07);display:grid;place-items:center;font:11px ui-monospace,Menlo,monospace;color:#5f6b7a">screenshot 2</div><div style="aspect-ratio:16/9;border-radius:8px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px);border:1px solid rgba(255,255,255,.07);display:grid;place-items:center;font:11px ui-monospace,Menlo,monospace;color:#5f6b7a">screenshot 3</div></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">In collections</div><div style="display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.07);border-radius:10px;overflow:hidden;background:#121720"><div style="display:flex;justify-content:space-between;padding:11px 14px;font-size:13.5px;border-bottom:1px solid rgba(255,255,255,.07)"><div>Favorites</div><div style="color:#5f6b7a">2 games</div></div><div style="display:flex;justify-content:space-between;padding:11px 14px;font-size:13.5px"><div>Weekend picks</div><div style="color:#5f6b7a">5 games</div></div></div></div>
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">Install</div><div style="display:grid;grid-template-columns:auto 1fr;gap:8px 18px;font-size:13px;padding:12px 14px;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:#121720"><div style="color:#5f6b7a">Size</div><div>{{ sel.size }}</div><div style="color:#5f6b7a">Location</div><div style="font-family:ui-monospace,Menlo,monospace;font-size:12px">D:\Hydro\Games</div><div style="color:#5f6b7a">Updates</div><div>Automatic</div></div></div>
+</div>
+</div>
+</div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1b"><div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Cover grid — browse-first, filters on top, hover reveals Play</div>
+<div class="dv-card" style="width:1440px"><div style="width:1440px;height:900px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0b0e13;color:#e8edf3;font-family:'IBM Plex Sans',system-ui,sans-serif">
+<div style="height:56px;flex:none;display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:22px;height:22px;border-radius:0 50% 50% 50%;transform:rotate(45deg);background:#3fd0c9"></div><div style="font:700 17px Sora,sans-serif;letter-spacing:.2px">Hydro</div></div>
+<div style="display:flex;gap:4px"><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Store</div><div style="padding:7px 12px;font-size:14px;font-weight:600;color:#e8edf3;background:#1a212c;border-radius:6px">Library</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Downloads</div></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px;width:260px;height:34px;padding:0 12px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);color:#5f6b7a;font-size:13px"><div style="width:11px;height:11px;border:2px solid #5f6b7a;border-radius:50%"></div>Search</div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3fd0c9,#6b5bd6)"></div><div style="font-size:13.5px;font-weight:500">ava_k</div></div>
+</div>
+<div style="padding:24px 36px 0;display:flex;flex-direction:column;gap:18px;flex:1;min-height:0">
+<div style="display:flex;align-items:flex-end;gap:14px">
+<div style="font:700 28px/1 Sora,sans-serif">Library</div><div style="font-size:13px;color:#5f6b7a;padding-bottom:3px">{{ count }}</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px;width:280px;height:36px;padding:0 12px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);color:#5f6b7a;font-size:13px"><div style="width:11px;height:11px;border:2px solid #5f6b7a;border-radius:50%"></div>Search by title or tag</div>
+<div style="display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);font-size:13px"><span style="color:#5f6b7a">Sort</span><span style="font-weight:500">Recently played</span><div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #8d9aab"></div></div>
+<div style="display:flex;height:36px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);overflow:hidden"><div style="width:38px;display:grid;place-items:center;background:#222b38"><div style="display:grid;grid-template-columns:1fr 1fr;gap:2px"><div style="width:5px;height:5px;background:#e8edf3"></div><div style="width:5px;height:5px;background:#e8edf3"></div><div style="width:5px;height:5px;background:#e8edf3"></div><div style="width:5px;height:5px;background:#e8edf3"></div></div></div><div style="width:38px;display:grid;place-items:center"><div style="display:flex;flex-direction:column;gap:2px"><div style="width:12px;height:2px;background:#5f6b7a"></div><div style="width:12px;height:2px;background:#5f6b7a"></div><div style="width:12px;height:2px;background:#5f6b7a"></div></div></div></div>
+</div>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<div style="padding:6px 12px;border-radius:999px;background:#3fd0c9;color:#06201f;font-size:12.5px;font-weight:600">All · 12</div>
+<div style="padding:6px 12px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12.5px;color:#c3ccd6">Installed · 7</div>
+<div style="padding:6px 12px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12.5px;color:#c3ccd6">Favorites · 2</div>
+<div style="width:1px;height:18px;background:rgba(255,255,255,.1);margin:0 6px"></div>
+<div style="padding:6px 12px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12.5px;color:#c3ccd6">Cozy</div>
+<div style="padding:6px 12px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12.5px;color:#c3ccd6">Co-op nights</div>
+<div style="padding:6px 12px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12.5px;color:#c3ccd6">Racing</div>
+<div style="padding:6px 12px;border-radius:999px;border:1px dashed rgba(255,255,255,.18);font-size:12.5px;color:#8d9aab">+ New collection</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:22px 16px">
+<sc-for list="{{ games }}" as="g" hint-placeholder-count="12">
+<div style="display:flex;flex-direction:column;gap:9px;opacity: {{ g.dim }}">
+<div style="position:relative;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background: {{ g.cover }}">
+<div style="position:absolute;left:12px;right:12px;bottom:12px;font:700 17px/1.1 Sora,sans-serif;text-shadow:0 2px 12px rgba(0,0,0,.5)">{{ g.name }}</div>
+<div style="position:absolute;inset:0;background:rgba(6,10,16,.6);display:flex;align-items:center;justify-content:center;opacity: {{ g.sel1 }}" style-hover="opacity:1"><div style="display:flex;align-items:center;gap:8px;height:38px;padding:0 18px;border-radius:7px;background:#3fd0c9;color:#06201f;font:600 13.5px Sora,sans-serif"><div style="width:0;height:0;border-left:9px solid #06201f;border-top:6px solid transparent;border-bottom:6px solid transparent"></div>{{ g.playLabel }}</div></div>
+<sc-if value="{{ g.installed }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:#3fd0c9;box-shadow:0 0 0 3px rgba(6,10,16,.6)"></div></sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.name }}</div><div style="font-size:11.5px;color: {{ g.statusColor }}">{{ g.status }}</div></div>
+</div>
+</sc-for>
+</div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1c"><div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Shelves — rail of collections, rows grouped by state</div>
+<div class="dv-card" style="width:1440px"><div style="width:1440px;height:900px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0b0e13;color:#e8edf3;font-family:'IBM Plex Sans',system-ui,sans-serif">
+<div style="height:56px;flex:none;display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:22px;height:22px;border-radius:0 50% 50% 50%;transform:rotate(45deg);background:#3fd0c9"></div><div style="font:700 17px Sora,sans-serif;letter-spacing:.2px">Hydro</div></div>
+<div style="display:flex;gap:4px"><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Store</div><div style="padding:7px 12px;font-size:14px;font-weight:600;color:#e8edf3;background:#1a212c;border-radius:6px">Library</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Downloads</div></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px;width:260px;height:34px;padding:0 12px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);color:#5f6b7a;font-size:13px"><div style="width:11px;height:11px;border:2px solid #5f6b7a;border-radius:50%"></div>Search</div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3fd0c9,#6b5bd6)"></div><div style="font-size:13.5px;font-weight:500">ava_k</div></div>
+</div>
+<div style="flex:1;display:flex;min-height:0">
+<div style="width:230px;flex:none;border-right:1px solid rgba(255,255,255,.07);background:#0e1218;padding:18px 12px;display:flex;flex-direction:column;gap:2px;font-size:13.5px">
+<div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:6px;background:#1a212c;font-weight:600"><div>All games</div><div style="color:#8d9aab;font-weight:400">12</div></div>
+<div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:6px;color:#c3ccd6"><div>Installed</div><div style="color:#5f6b7a">7</div></div>
+<div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:6px;color:#c3ccd6"><div>Favorites</div><div style="color:#5f6b7a">2</div></div>
+<div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:6px;color:#c3ccd6"><div>Recently played</div><div style="color:#5f6b7a">3</div></div>
+<div style="padding:18px 10px 6px;font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">Collections</div>
+<div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:6px;color:#c3ccd6"><div>Cozy</div><div style="color:#5f6b7a">2</div></div>
+<div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:6px;color:#c3ccd6"><div>Co-op nights</div><div style="color:#5f6b7a">3</div></div>
+<div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:6px;color:#c3ccd6"><div>Racing</div><div style="color:#5f6b7a">2</div></div>
+<div style="padding:8px 10px;color:#8d9aab;font-size:13px">+ New collection</div>
+</div>
+<div style="flex:1;min-width:0;padding:24px 32px;display:flex;flex-direction:column;gap:26px;overflow:hidden">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px"><div style="font:600 18px Sora,sans-serif">Continue playing</div><div style="font-size:12.5px;color:#5f6b7a">Last 7 days</div></div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+<sc-for list="{{ recent }}" as="g" hint-placeholder-count="3">
+<div style="border-radius:10px;overflow:hidden;background:#121720;border:1px solid rgba(255,255,255,.07)">
+<div style="height:168px;position:relative;background: {{ g.wide }}"><div style="position:absolute;left:14px;top:14px;font:700 22px/1 Sora,sans-serif;text-shadow:0 2px 12px rgba(0,0,0,.5)">{{ g.name }}</div><div style="position:absolute;left:14px;bottom:14px;display:flex;align-items:center;gap:8px;height:36px;padding:0 16px;border-radius:7px;background:#3fd0c9;color:#06201f;font:600 13px Sora,sans-serif"><div style="width:0;height:0;border-left:9px solid #06201f;border-top:6px solid transparent;border-bottom:6px solid transparent"></div>Play</div></div>
+<div style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center"><div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:14px;font-weight:600">{{ g.name }}</div><div style="font-size:12px;color:#8d9aab">Last played {{ g.last }}</div></div><div style="font:12px ui-monospace,Menlo,monospace;color:#8d9aab">{{ g.playtime }}</div></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px"><div style="font:600 18px Sora,sans-serif">Installed</div><div style="font-size:12.5px;color:#5f6b7a">7 games · 141 GB</div><div style="flex:1"></div><div style="font-size:12.5px;color:#3fd0c9">See all</div></div>
+<div style="display:flex;gap:14px">
+<sc-for list="{{ installedList }}" as="g" hint-placeholder-count="7">
+<div style="width:112px;flex:none;display:flex;flex-direction:column;gap:7px"><div style="height:168px;border-radius:7px;position:relative;background: {{ g.cover }}"><div style="position:absolute;left:9px;right:9px;bottom:9px;font:700 13px/1.1 Sora,sans-serif;text-shadow:0 2px 10px rgba(0,0,0,.5)">{{ g.name }}</div></div><div style="font-size:11.5px;color:#8d9aab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.playtime }} played</div></div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px"><div style="font:600 18px Sora,sans-serif">Co-op nights</div><div style="font-size:12.5px;color:#5f6b7a">Collection · 3 games</div><div style="flex:1"></div><div style="font-size:12.5px;color:#3fd0c9">Edit</div></div>
+<div style="display:flex;gap:14px">
+<sc-for list="{{ coop }}" as="g" hint-placeholder-count="3">
+<div style="width:112px;flex:none;display:flex;flex-direction:column;gap:7px;opacity: {{ g.dim }}"><div style="height:168px;border-radius:7px;position:relative;background: {{ g.cover }}"><div style="position:absolute;left:9px;right:9px;bottom:9px;font:700 13px/1.1 Sora,sans-serif;text-shadow:0 2px 10px rgba(0,0,0,.5)">{{ g.name }}</div></div><div style="font-size:11.5px;color: {{ g.statusColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.status }}</div></div>
+</sc-for>
+<div style="width:112px;height:168px;flex:none;border-radius:7px;border:1px dashed rgba(255,255,255,.18);display:grid;place-items:center;font-size:12px;color:#8d9aab;text-align:center">+ Add game</div>
+</div>
+</div>
+</div>
+</div>
+</div></div></div>
+
+</div>
+<div class="dv-sub">Supporting screens</div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1d"><div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Store — featured, offers, browse by tag</div>
+<div class="dv-card" style="width:1440px"><div style="width:1440px;height:900px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0b0e13;color:#e8edf3;font-family:'IBM Plex Sans',system-ui,sans-serif">
+<div style="height:56px;flex:none;display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:22px;height:22px;border-radius:0 50% 50% 50%;transform:rotate(45deg);background:#3fd0c9"></div><div style="font:700 17px Sora,sans-serif;letter-spacing:.2px">Hydro</div></div>
+<div style="display:flex;gap:4px"><div style="padding:7px 12px;font-size:14px;font-weight:600;color:#e8edf3;background:#1a212c;border-radius:6px">Store</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Library</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Downloads</div></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px;width:260px;height:34px;padding:0 12px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);color:#5f6b7a;font-size:13px"><div style="width:11px;height:11px;border:2px solid #5f6b7a;border-radius:50%"></div>Search the store</div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3fd0c9,#6b5bd6)"></div><div style="font-size:13.5px;font-weight:500">ava_k</div></div>
+</div>
+<div style="height:44px;flex:none;display:flex;align-items:stretch;gap:24px;padding:0 36px;border-bottom:1px solid rgba(255,255,255,.07);font-size:13.5px;color:#8d9aab">
+<div style="display:flex;align-items:center;color:#e8edf3;font-weight:600;border-bottom:2px solid #3fd0c9">Featured</div><div style="display:flex;align-items:center">New releases</div><div style="display:flex;align-items:center">Top sellers</div><div style="display:flex;align-items:center">Under $10</div><div style="display:flex;align-items:center">Tags</div><div style="flex:1"></div><div style="display:flex;align-items:center">Wishlist · 3</div>
+</div>
+<div style="padding:22px 36px;display:flex;flex-direction:column;gap:26px;flex:1;min-height:0">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 420px;border-radius:12px;overflow:hidden;background:#121720;border:1px solid rgba(255,255,255,.07)">
+<div style="height:380px;position:relative;background: {{ featured.hero }}"><div style="position:absolute;left:30px;top:24px;font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#3fd0c9">Featured this week</div><div style="position:absolute;left:30px;bottom:26px;display:flex;flex-direction:column;gap:6px"><div style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#aeb9c6">{{ featured.studio }}</div><div style="font:700 52px/1 Sora,sans-serif;letter-spacing:-.5px;text-shadow:0 2px 20px rgba(0,0,0,.4)">{{ featured.name }}</div></div></div>
+<div style="padding:22px 24px;display:flex;flex-direction:column;gap:14px;border-left:1px solid rgba(255,255,255,.07)">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="height:84px;border-radius:6px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px);display:grid;place-items:center;font:11px ui-monospace,Menlo,monospace;color:#5f6b7a">screenshot</div><div style="height:84px;border-radius:6px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px);display:grid;place-items:center;font:11px ui-monospace,Menlo,monospace;color:#5f6b7a">screenshot</div><div style="height:84px;border-radius:6px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px);display:grid;place-items:center;font:11px ui-monospace,Menlo,monospace;color:#5f6b7a">screenshot</div><div style="height:84px;border-radius:6px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px);display:grid;place-items:center;font:11px ui-monospace,Menlo,monospace;color:#5f6b7a">screenshot</div></div>
+<div style="font-size:13.5px;line-height:1.5;color:#c3ccd6;text-wrap:pretty">{{ featured.desc }}</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ featured.tags }}" as="t" hint-placeholder-count="3"><div style="padding:4px 10px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:11.5px;color:#c3ccd6">{{ t }}</div></sc-for></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:10px"><div style="font:600 22px Sora,sans-serif;margin-right:6px">{{ featured.price }}</div><div style="height:40px;padding:0 18px;border-radius:8px;background:#3fd0c9;color:#06201f;display:flex;align-items:center;font:600 13.5px Sora,sans-serif">Add to library</div><div style="height:40px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;font-size:13px;font-weight:500">Wishlist</div></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px"><div style="font:600 18px Sora,sans-serif">Special offers</div><div style="font-size:12.5px;color:#e2b857">Ends in 2d 14h</div><div style="flex:1"></div><div style="font-size:12.5px;color:#3fd0c9">See all</div></div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+<sc-for list="{{ offers }}" as="g" hint-placeholder-count="4">
+<div style="border-radius:10px;overflow:hidden;background:#121720;border:1px solid rgba(255,255,255,.07)">
+<div style="height:118px;position:relative;background: {{ g.wide }}"><div style="position:absolute;top:10px;left:10px;background:#e2b857;color:#2a1d00;font:700 12px ui-monospace,Menlo,monospace;padding:3px 7px;border-radius:4px">{{ g.disc }}</div><div style="position:absolute;left:12px;bottom:10px;font:700 18px/1 Sora,sans-serif;text-shadow:0 2px 10px rgba(0,0,0,.5)">{{ g.name }}</div></div>
+<div style="padding:11px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="min-width:0"><div style="font-size:13.5px;font-weight:600">{{ g.name }}</div><div style="font-size:11.5px;color:#8d9aab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.tagStr }}</div></div><div style="text-align:right;flex:none"><div style="font-size:11px;color:#5f6b7a;text-decoration:line-through">{{ g.old }}</div><div style="font-size:14px;font-weight:600">{{ g.price }}</div></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="font:600 18px Sora,sans-serif">Browse by tag</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">Adventure</div><div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">RPG</div><div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">Cozy</div><div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">Co-op</div><div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">Racing</div><div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">Horror</div><div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">Strategy</div><div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">Puzzle</div><div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">Survival</div><div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">Indie</div><div style="padding:8px 14px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:13px;color:#c3ccd6">Simulation</div><div style="padding:8px 14px;border-radius:8px;font-size:13px;color:#3fd0c9">All tags →</div>
+</div>
+</div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1e"><div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Game detail — store page for a game not yet in the library</div>
+<div class="dv-card" style="width:1440px"><div style="width:1440px;height:900px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0b0e13;color:#e8edf3;font-family:'IBM Plex Sans',system-ui,sans-serif">
+<div style="height:56px;flex:none;display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:22px;height:22px;border-radius:0 50% 50% 50%;transform:rotate(45deg);background:#3fd0c9"></div><div style="font:700 17px Sora,sans-serif;letter-spacing:.2px">Hydro</div></div>
+<div style="display:flex;gap:4px"><div style="padding:7px 12px;font-size:14px;font-weight:600;color:#e8edf3;background:#1a212c;border-radius:6px">Store</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Library</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Downloads</div></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px;width:260px;height:34px;padding:0 12px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);color:#5f6b7a;font-size:13px"><div style="width:11px;height:11px;border:2px solid #5f6b7a;border-radius:50%"></div>Search the store</div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3fd0c9,#6b5bd6)"></div><div style="font-size:13.5px;font-weight:500">ava_k</div></div>
+</div>
+<div style="padding:18px 36px;display:flex;flex-direction:column;gap:16px;flex:1;min-height:0">
+<div style="font-size:12px;color:#5f6b7a;display:flex;gap:8px"><span>Store</span><span>›</span><span>Puzzle</span><span>›</span><span style="color:#8d9aab">{{ featured.name }}</span></div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div style="display:flex;flex-direction:column;gap:6px"><div style="font:700 36px/1 Sora,sans-serif;letter-spacing:-.4px">{{ featured.name }}</div><div style="font-size:13.5px;color:#8d9aab">{{ featured.studio }} · Released 12 Sep 2026</div></div>
+<div style="height:38px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;font-size:13px;font-weight:500">Add to wishlist</div>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="aspect-ratio:16/9;border-radius:10px;position:relative;background:repeating-linear-gradient(135deg,#1a212c 0 12px,#151b24 12px 24px);border:1px solid rgba(255,255,255,.07);display:grid;place-items:center"><div style="display:flex;flex-direction:column;align-items:center;gap:12px"><div style="width:64px;height:64px;border-radius:50%;background:rgba(63,208,201,.15);border:1px solid rgba(63,208,201,.5);display:grid;place-items:center"><div style="width:0;height:0;border-left:18px solid #3fd0c9;border-top:11px solid transparent;border-bottom:11px solid transparent;margin-left:5px"></div></div><div style="font:11px ui-monospace,Menlo,monospace;color:#5f6b7a">trailer · 1:42</div></div></div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px"><div style="height:66px;border-radius:6px;border:2px solid #3fd0c9;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px)"></div><div style="height:66px;border-radius:6px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px)"></div><div style="height:66px;border-radius:6px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px)"></div><div style="height:66px;border-radius:6px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px)"></div><div style="height:66px;border-radius:6px;background:repeating-linear-gradient(135deg,#1a212c 0 10px,#151b24 10px 20px)"></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="height:150px;border-radius:10px;position:relative;background: {{ featured.wide }}"><div style="position:absolute;left:16px;bottom:14px;font:700 26px/1 Sora,sans-serif;text-shadow:0 2px 12px rgba(0,0,0,.5)">{{ featured.name }}</div></div>
+<div style="font-size:13.5px;line-height:1.5;color:#c3ccd6;text-wrap:pretty">{{ featured.desc }}</div>
+<div style="display:grid;grid-template-columns:auto 1fr;gap:7px 20px;font-size:12.5px"><div style="color:#5f6b7a">Developer</div><div>{{ featured.studio }}</div><div style="color:#5f6b7a">Publisher</div><div>{{ featured.studio }}</div><div style="color:#5f6b7a">Platforms</div><div>Windows · macOS · Linux</div><div style="color:#5f6b7a">Size</div><div>4.8 GB</div></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ featured.tags }}" as="t" hint-placeholder-count="3"><div style="padding:4px 10px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:11.5px;color:#c3ccd6">{{ t }}</div></sc-for></div>
+<div style="background:#121720;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:600">Buy {{ featured.name }}</div><div style="font:600 22px Sora,sans-serif">{{ featured.price }}</div></div>
+<div style="height:44px;border-radius:8px;background:#3fd0c9;color:#06201f;display:flex;align-items:center;justify-content:center;font:600 14.5px Sora,sans-serif">Add to library</div>
+<div style="font-size:11.5px;color:#5f6b7a;text-align:center">Instant access · Install on any device · 2-hour refund window</div>
+</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;max-width:960px"><div style="font:600 18px Sora,sans-serif">About this game</div><div style="font-size:14px;line-height:1.55;color:#c3ccd6;text-wrap:pretty">Glassbound is a narrative puzzle adventure set in a city made of memory. Each district only holds together while someone remembers it — walk through, piece together what happened, and decide which memories are worth keeping before the glass gives way.</div></div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1f"><div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Add to library — confirmation with install + collection choices</div>
+<div class="dv-card" style="width:1440px"><div style="width:1440px;height:900px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0b0e13;color:#e8edf3;font-family:'IBM Plex Sans',system-ui,sans-serif">
+<div style="height:56px;flex:none;display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:22px;height:22px;border-radius:0 50% 50% 50%;transform:rotate(45deg);background:#3fd0c9"></div><div style="font:700 17px Sora,sans-serif;letter-spacing:.2px">Hydro</div></div>
+<div style="display:flex;gap:4px"><div style="padding:7px 12px;font-size:14px;font-weight:600;color:#e8edf3;background:#1a212c;border-radius:6px">Store</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Library</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Downloads</div></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px;width:260px;height:34px;padding:0 12px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);color:#5f6b7a;font-size:13px"><div style="width:11px;height:11px;border:2px solid #5f6b7a;border-radius:50%"></div>Search the store</div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3fd0c9,#6b5bd6)"></div><div style="font-size:13.5px;font-weight:500">ava_k</div></div>
+</div>
+<div style="padding:24px 36px;display:flex;flex-direction:column;gap:16px">
+<div style="font:600 18px Sora,sans-serif">New &amp; trending</div>
+<div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:16px">
+<sc-for list="{{ storeGames }}" as="g" hint-placeholder-count="8">
+<div style="display:flex;flex-direction:column;gap:8px"><div style="aspect-ratio:2/3;border-radius:8px;position:relative;background: {{ g.cover }}"><div style="position:absolute;left:10px;right:10px;bottom:10px;font:700 15px/1.1 Sora,sans-serif;text-shadow:0 2px 10px rgba(0,0,0,.5)">{{ g.name }}</div></div><div style="display:flex;justify-content:space-between;font-size:12px"><div style="color:#8d9aab">{{ g.tagStr }}</div><div style="font-weight:600">{{ g.price }}</div></div></div>
+</sc-for>
+</div>
+</div>
+<div style="position:absolute;inset:0;background:rgba(5,8,12,.76);display:flex;align-items:center;justify-content:center">
+<div style="width:540px;background:#121720;border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden">
+<div style="padding:22px 24px 0;display:flex;gap:16px;align-items:center">
+<div style="width:64px;height:64px;border-radius:10px;flex:none;background: {{ featured.cover }}"></div>
+<div style="display:flex;flex-direction:column;gap:3px"><div style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#3fd0c9">Added to your library</div><div style="font:600 22px/1.1 Sora,sans-serif">{{ featured.name }}</div><div style="font-size:12.5px;color:#8d9aab">{{ featured.studio }} · {{ featured.price }}</div></div>
+<div style="flex:1"></div>
+<div style="width:30px;height:30px;border-radius:6px;display:grid;place-items:center;color:#8d9aab;font-size:18px;align-self:flex-start">×</div>
+</div>
+<div style="padding:22px 24px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">Install</div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;background:#0e1218;border:1px solid rgba(255,255,255,.07)">
+<div style="width:38px;height:22px;border-radius:11px;background:#3fd0c9;position:relative;flex:none"><div style="position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;background:#06201f"></div></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font-size:13.5px;font-weight:600">Install now</div><div style="font-size:12px;color:#8d9aab">4.8 GB download · about 6 min</div></div>
+<div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:8px;background:#1a212c;border:1px solid rgba(255,255,255,.08);font-size:12.5px"><span style="font-family:ui-monospace,Menlo,monospace">D:</span><span>Games · 212 GB free</span><div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #8d9aab"></div></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f6b7a">Add to collection <span style="color:#3e4856;text-transform:none;letter-spacing:0">· optional</span></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<div style="padding:7px 13px;border-radius:999px;background:rgba(63,208,201,.14);border:1px solid #3fd0c9;font-size:12.5px;font-weight:600;color:#3fd0c9">Cozy</div>
+<div style="padding:7px 13px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12.5px;color:#c3ccd6">Co-op nights</div>
+<div style="padding:7px 13px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12.5px;color:#c3ccd6">Racing</div>
+<div style="padding:7px 13px;border-radius:999px;background:#1a212c;border:1px solid rgba(255,255,255,.07);font-size:12.5px;color:#c3ccd6">Weekend picks</div>
+<div style="padding:7px 13px;border-radius:999px;border:1px dashed rgba(255,255,255,.18);font-size:12.5px;color:#8d9aab">+ New</div>
+</div>
+</div>
+</div>
+<div style="padding:16px 24px;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:10px;justify-content:flex-end;align-items:center;background:#0e1218">
+<div style="font-size:12.5px;color:#3fd0c9;margin-right:auto">View in library →</div>
+<div style="height:40px;padding:0 16px;border-radius:8px;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;font-size:13.5px;font-weight:500">Not now</div>
+<div style="height:40px;padding:0 18px;border-radius:8px;background:#3fd0c9;color:#06201f;display:flex;align-items:center;font:600 13.5px Sora,sans-serif">Install &amp; open library</div>
+</div>
+</div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1g"><div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Settings — library section, default view ties to <a class="dv-oid" href="#1a">1a</a>/<a class="dv-oid" href="#1b">1b</a>/<a class="dv-oid" href="#1c">1c</a></div>
+<div class="dv-card" style="width:1440px"><div style="width:1440px;height:900px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0b0e13;color:#e8edf3;font-family:'IBM Plex Sans',system-ui,sans-serif">
+<div style="height:56px;flex:none;display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:22px;height:22px;border-radius:0 50% 50% 50%;transform:rotate(45deg);background:#3fd0c9"></div><div style="font:700 17px Sora,sans-serif;letter-spacing:.2px">Hydro</div></div>
+<div style="display:flex;gap:4px"><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Store</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Library</div><div style="padding:7px 12px;font-size:14px;font-weight:500;color:#8d9aab;border-radius:6px">Downloads</div></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px;width:260px;height:34px;padding:0 12px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.08);color:#5f6b7a;font-size:13px"><div style="width:11px;height:11px;border:2px solid #5f6b7a;border-radius:50%"></div>Search</div>
+<div style="display:flex;align-items:center;gap:10px;padding:4px 10px 4px 4px;border-radius:999px;background:#1a212c"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3fd0c9,#6b5bd6)"></div><div style="font-size:13.5px;font-weight:500">ava_k</div></div>
+</div>
+<div style="flex:1;display:flex;min-height:0">
+<div style="width:260px;flex:none;border-right:1px solid rgba(255,255,255,.07);background:#0e1218;padding:28px 16px;display:flex;flex-direction:column;gap:2px;font-size:13.5px">
+<div style="font:700 22px Sora,sans-serif;padding:0 10px 18px">Settings</div>
+<div style="padding:9px 10px;border-radius:6px;color:#c3ccd6">Account</div>
+<div style="padding:9px 10px;border-radius:6px;background:#1a212c;font-weight:600">Library</div>
+<div style="padding:9px 10px;border-radius:6px;color:#c3ccd6">Downloads &amp; storage</div>
+<div style="padding:9px 10px;border-radius:6px;color:#c3ccd6">Interface</div>
+<div style="padding:9px 10px;border-radius:6px;color:#c3ccd6">Notifications</div>
+<div style="padding:9px 10px;border-radius:6px;color:#c3ccd6">Privacy</div>
+<div style="flex:1"></div>
+<div style="padding:9px 10px;font-size:12px;color:#5f6b7a">Hydro 1.4.2 · Up to date</div>
+</div>
+<div style="flex:1;min-width:0;padding:34px 48px;display:flex;flex-direction:column;gap:28px;max-width:900px">
+<div style="display:flex;flex-direction:column;gap:6px"><div style="font:700 26px Sora,sans-serif">Library</div><div style="font-size:13.5px;color:#8d9aab">How Hydro organizes, installs and updates your games.</div></div>
+<div style="display:flex;flex-direction:column;background:#121720;border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden">
+<div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07)"><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="font-size:14px;font-weight:600">Default install folder</div><div style="font:12.5px ui-monospace,Menlo,monospace;color:#8d9aab">D:\Hydro\Games</div></div><div style="height:34px;padding:0 14px;border-radius:7px;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;font-size:13px;font-weight:500">Change</div></div>
+<div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07)"><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="font-size:14px;font-weight:600">Auto-update games</div><div style="font-size:12.5px;color:#8d9aab">Download updates when Hydro is idle.</div></div><div style="width:38px;height:22px;border-radius:11px;background:#3fd0c9;position:relative"><div style="position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;background:#06201f"></div></div></div>
+<div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07)"><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="font-size:14px;font-weight:600">Show hidden games</div><div style="font-size:12.5px;color:#8d9aab">Include games you've hidden in lists and search.</div></div><div style="width:38px;height:22px;border-radius:11px;background:#2a3442;position:relative"><div style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#8d9aab"></div></div></div>
+<div style="display:flex;align-items:center;gap:16px;padding:16px 20px"><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="font-size:14px;font-weight:600">Launch Hydro at startup</div><div style="font-size:12.5px;color:#8d9aab">Start minimized so downloads can continue.</div></div><div style="width:38px;height:22px;border-radius:11px;background:#3fd0c9;position:relative"><div style="position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;background:#06201f"></div></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px"><div style="font-size:14px;font-weight:600">Default library view</div><div style="font-size:12.5px;color:#8d9aab">Pick how the Library tab opens.</div></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+<div style="padding:12px;border-radius:10px;background:#121720;border:1px solid #3fd0c9;display:flex;flex-direction:column;gap:10px"><div style="height:64px;border-radius:5px;background:#0e1218;display:flex;gap:3px;padding:5px"><div style="width:22px;border-radius:2px;background:#222b38"></div><div style="flex:1;border-radius:2px;background:#1a212c"></div></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600"><div>Split view</div><div style="width:14px;height:14px;border-radius:50%;background:#3fd0c9;box-shadow:inset 0 0 0 3px #121720,inset 0 0 0 7px #3fd0c9"></div></div></div>
+<div style="padding:12px;border-radius:10px;background:#121720;border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:10px"><div style="height:64px;border-radius:5px;background:#0e1218;display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:5px"><div style="border-radius:2px;background:#222b38"></div><div style="border-radius:2px;background:#222b38"></div><div style="border-radius:2px;background:#222b38"></div><div style="border-radius:2px;background:#222b38"></div><div style="border-radius:2px;background:#222b38"></div></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:500;color:#c3ccd6"><div>Cover grid</div><div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #5f6b7a"></div></div></div>
+<div style="padding:12px;border-radius:10px;background:#121720;border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:10px"><div style="height:64px;border-radius:5px;background:#0e1218;display:flex;flex-direction:column;gap:3px;padding:5px"><div style="flex:1;border-radius:2px;background:#222b38"></div><div style="flex:1;border-radius:2px;background:#1a212c"></div><div style="flex:1;border-radius:2px;background:#1a212c"></div></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:500;color:#c3ccd6"><div>Shelves</div><div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #5f6b7a"></div></div></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="font-size:14px;font-weight:600">Storage</div>
+<div style="display:flex;flex-direction:column;gap:14px;padding:16px 20px;background:#121720;border:1px solid rgba(255,255,255,.07);border-radius:12px">
+<div style="display:flex;flex-direction:column;gap:7px"><div style="display:flex;justify-content:space-between;font-size:13px"><div><span style="font-family:ui-monospace,Menlo,monospace">D:</span> Games · 7 games installed</div><div style="color:#8d9aab">141 GB of 1 TB</div></div><div style="height:6px;border-radius:3px;background:#1a212c;overflow:hidden"><div style="width:14%;height:100%;background:#3fd0c9"></div></div></div>
+<div style="display:flex;flex-direction:column;gap:7px"><div style="display:flex;justify-content:space-between;font-size:13px"><div><span style="font-family:ui-monospace,Menlo,monospace">C:</span> System · 0 games installed</div><div style="color:#8d9aab">430 GB of 512 GB</div></div><div style="height:6px;border-radius:3px;background:#1a212c;overflow:hidden"><div style="width:84%;height:100%;background:#e2b857"></div></div></div>
+</div>
+</div>
+</div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1h"><div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Sign in / create account</div>
+<div class="dv-card" style="width:1440px"><div style="width:1440px;height:900px;overflow:hidden;position:relative;display:flex;background:#0b0e13;color:#e8edf3;font-family:'IBM Plex Sans',system-ui,sans-serif">
+<div style="flex:1;position:relative;overflow:hidden">
+<div style="position:absolute;width:1000px;height:1000px;border-radius:50%;left:-260px;top:-320px;background:radial-gradient(circle,rgba(63,208,201,.28),rgba(63,208,201,0) 62%)"></div>
+<div style="position:absolute;left:48px;top:40px;display:flex;align-items:center;gap:12px"><div style="width:30px;height:30px;border-radius:0 50% 50% 50%;transform:rotate(45deg);background:#3fd0c9"></div><div style="font:700 24px Sora,sans-serif">Hydro</div></div>
+<div style="position:absolute;left:48px;bottom:56px;display:flex;flex-direction:column;gap:14px;max-width:520px"><div style="font:700 54px/1.05 Sora,sans-serif;letter-spacing:-1px;text-wrap:pretty">Every game you own. One library.</div><div style="font-size:16px;line-height:1.5;color:#8d9aab;text-wrap:pretty">Buy, install, and organize your games in one place. Your library and collections sync to every device you sign in on.</div></div>
+<div style="position:absolute;right:60px;top:170px;width:200px;height:300px;border-radius:12px;transform:rotate(8deg);box-shadow:0 30px 60px rgba(0,0,0,.5);background: {{ tilt1.cover }}"><div style="position:absolute;left:16px;right:16px;bottom:16px;font:700 22px/1.1 Sora,sans-serif;text-shadow:0 2px 12px rgba(0,0,0,.5)">{{ tilt1.name }}</div></div>
+<div style="position:absolute;right:230px;top:230px;width:200px;height:300px;border-radius:12px;transform:rotate(-6deg);box-shadow:0 30px 60px rgba(0,0,0,.5);background: {{ tilt2.cover }}"><div style="position:absolute;left:16px;right:16px;bottom:16px;font:700 22px/1.1 Sora,sans-serif;text-shadow:0 2px 12px rgba(0,0,0,.5)">{{ tilt2.name }}</div></div>
+<div style="position:absolute;right:150px;top:330px;width:200px;height:300px;border-radius:12px;transform:rotate(2deg);box-shadow:0 30px 60px rgba(0,0,0,.6);background: {{ tilt3.cover }}"><div style="position:absolute;left:16px;right:16px;bottom:16px;font:700 22px/1.1 Sora,sans-serif;text-shadow:0 2px 12px rgba(0,0,0,.5)">{{ tilt3.name }}</div></div>
+</div>
+<div style="width:520px;flex:none;background:#0e1218;border-left:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;padding:40px">
+<div style="width:360px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;gap:22px;border-bottom:1px solid rgba(255,255,255,.07);font-size:14px"><div style="padding:0 2px 12px;font-weight:600;border-bottom:2px solid #3fd0c9;margin-bottom:-1px">Sign in</div><div style="padding:0 2px 12px;color:#8d9aab">Create account</div></div>
+<div style="display:flex;flex-direction:column;gap:7px"><div style="font-size:12.5px;font-weight:500;color:#c3ccd6">Email</div><div style="height:44px;padding:0 14px;border-radius:8px;background:#121720;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;font-size:14px">ava.k@example.com</div></div>
+<div style="display:flex;flex-direction:column;gap:7px"><div style="display:flex;justify-content:space-between;font-size:12.5px"><div style="font-weight:500;color:#c3ccd6">Password</div><div style="color:#3fd0c9">Forgot?</div></div><div style="height:44px;padding:0 14px;border-radius:8px;background:#121720;border:1px solid #3fd0c9;display:flex;align-items:center;font-size:14px;letter-spacing:3px">••••••••••</div></div>
+<div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#c3ccd6"><div style="width:16px;height:16px;border-radius:4px;background:#3fd0c9;display:grid;place-items:center"><div style="width:8px;height:4px;border-left:2px solid #06201f;border-bottom:2px solid #06201f;transform:rotate(-45deg) translate(1px,-1px)"></div></div>Keep me signed in</div>
+<div style="height:46px;border-radius:8px;background:#3fd0c9;color:#06201f;display:flex;align-items:center;justify-content:center;font:600 15px Sora,sans-serif">Sign in</div>
+<div style="display:flex;align-items:center;gap:12px;font-size:12px;color:#5f6b7a"><div style="flex:1;height:1px;background:rgba(255,255,255,.08)"></div>or<div style="flex:1;height:1px;background:rgba(255,255,255,.08)"></div></div>
+<div style="height:44px;border-radius:8px;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:500">Email me a sign-in code</div>
+<div style="font-size:12.5px;color:#8d9aab;text-align:center">New to Hydro? <span style="color:#3fd0c9">Create an account</span></div>
+</div>
+</div>
+</div></div></div>
+
+</div>
+<p class="dv-next">Try next: "go with <a class="dv-oid" href="#1a">1a</a> and show the game list filtered by a tag" · "make <a class="dv-oid" href="#1b">1b</a> open a detail drawer instead of a page" · "add a Downloads screen" · "make the add-to-library flow clickable"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;selectedGame&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Tidefall&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;Tidefall&quot;,&quot;Neon Drift&quot;,&quot;Hollow Vale&quot;,&quot;Starforge&quot;,&quot;Rust &amp; Ruin&quot;,&quot;Pixel Pioneers&quot;,&quot;Cinder Peak&quot;,&quot;Orbital Decay&quot;,&quot;Mossgrove&quot;,&quot;Velocity 9&quot;,&quot;Deep Signal&quot;,&quot;Wardens of Ash&quot;],&quot;section&quot;:&quot;Library&quot;},&quot;installedOnly&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Library&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const P = this.props;
+    const selName = P.selectedGame ?? 'Tidefall';
+    const onlyInst = P.installedOnly ?? false;
+    const grad = (h, a) => `repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 6px,transparent 6px 14px),linear-gradient(${a}deg,hsl(${h} 52% 36%),hsl(${h + 25} 60% 13%))`;
+    const heroOf = h => `linear-gradient(0deg,#0b0e13 0%,rgba(11,14,19,0) 60%),linear-gradient(90deg,rgba(11,14,19,.55),rgba(11,14,19,0) 55%),repeating-linear-gradient(135deg,rgba(255,255,255,.03) 0 10px,transparent 10px 24px),linear-gradient(165deg,hsl(${h} 50% 34%),hsl(${h + 25} 60% 12%))`;
+    const L = [
+      ['Tidefall', 'Brinewater Games', 195, ['Adventure', 'Open World', 'Sailing'], 1, '42.5 h', 'Today', '38.2 GB', 1, "Chart the drowned archipelago of Sorrow's Reach. Sail, salvage and trade your way through a world the tide redraws every night."],
+      ['Neon Drift', 'Kaskade', 320, ['Racing', 'Arcade', 'Synthwave'], 1, '12.1 h', 'Yesterday', '9.6 GB', 0, 'Arcade racing on neon-lit rooftops. Chain drifts, grind rails and keep the beat to stay ahead of the city curfew.'],
+      ['Hollow Vale', 'Lanternlight', 265, ['RPG', 'Dark Fantasy', 'Story Rich'], 1, '88.0 h', '3 days ago', '61.4 GB', 1, 'A valley cut off from the sun for a hundred years. Lead a small company of lantern-bearers and decide who gets to see daylight again.'],
+      ['Starforge', 'Ninth Orbit', 230, ['Strategy', 'Sci-fi', 'Co-op'], 0, '5.3 h', '2 weeks ago', '22.0 GB', 0, 'Build a civilization around a dying star. Turn-based 4X with asynchronous co-op campaigns.'],
+      ['Rust & Ruin', 'Dustbowl Co.', 25, ['Survival', 'Crafting', 'Co-op'], 1, '19.7 h', 'Last week', '27.8 GB', 0, 'Scavenge, build and defend a homestead in the dust belt with up to four friends.'],
+      ['Pixel Pioneers', 'Tinyfolk', 95, ['Farming', 'Cozy', 'Pixel Art'], 1, '63.2 h', 'Today', '1.2 GB', 0, 'Settle a frontier town one season at a time. Plant, fish, befriend the neighbours, and keep the trains running.'],
+      ['Cinder Peak', 'Ashline', 10, ['Action', 'Roguelike'], 0, '0 h', 'Never', '14.5 GB', 0, 'Climb a volcano that rearranges itself every run. Fast, punishing, generous with unlocks.'],
+      ['Orbital Decay', 'Ninth Orbit', 210, ['Horror', 'Sci-fi', 'Puzzle'], 0, '3.4 h', 'Last month', '18.9 GB', 0, 'Alone on a station in a decaying orbit. Solve what went wrong before the atmosphere does it for you.'],
+      ['Mossgrove', 'Fernway', 140, ['Cozy', 'Exploration', 'Relaxing'], 1, '7.8 h', 'Yesterday', '4.3 GB', 0, 'Wander an old-growth forest with a sketchbook. No combat, no timers — just moss, light and things worth drawing.'],
+      ['Velocity 9', 'Kaskade', 50, ['Racing', 'Sim'], 0, '1.1 h', 'Last month', '33.0 GB', 0, 'Nine real circuits, nine prototype cars, one unforgiving physics model.'],
+      ['Deep Signal', 'Lanternlight', 185, ['Puzzle', 'Mystery'], 1, '2.0 h', '2 days ago', '3.1 GB', 0, 'Decode transmissions from somewhere below the ice shelf. A slow-burn puzzle mystery told through audio and maps.'],
+      ['Wardens of Ash', 'Ashline', 355, ['Action', 'Co-op', 'Souls-like'], 0, '0 h', 'Never', '45.6 GB', 0, 'Hold the last gate against the ashfall. Three-player co-op with shared stamina and permadeath seasons.']
+    ].map(([name, studio, hue, tags, inst, playtime, last, size, fav, desc]) => {
+      const sel = name === selName;
+      return {
+        name, studio, hue, tags, installed: !!inst, playtime, last, size, fav: !!fav, desc,
+        cover: grad(hue, 165), wide: grad(hue, 110), hero: heroOf(hue),
+        status: inst ? `Installed · ${playtime}` : 'Not installed',
+        statusColor: inst ? '#8d9aab' : '#5f6b7a',
+        dot: inst ? '#3fd0c9' : '#2a3442',
+        rowBg: sel ? '#1a212c' : 'transparent',
+        rowColor: sel ? '#e8edf3' : (inst ? '#c3ccd6' : '#6f7b8a'),
+        sel1: sel ? 1 : 0, dim: inst ? 1 : .55,
+        playLabel: inst ? 'Play' : 'Install', tagStr: tags.slice(0, 2).join(' · ')
+      };
+    });
+    const games = onlyInst ? L.filter(g => g.installed) : L;
+    const sel = L.find(g => g.name === selName) || L[0];
+    const S = [
+      ['Glassbound', 'Lanternlight', 280, ['Puzzle', 'Narrative', 'Atmospheric'], '$24.99', '', 'A city made of memory, held together only while someone remembers it. A narrative puzzle adventure about what you choose to keep.'],
+      ['Ferrum', 'Dustbowl Co.', 15, ['Action', 'Metroidvania'], '$19.99', '$29.99', ''],
+      ['Lowtide', 'Brinewater Games', 190, ['Fishing', 'Cozy'], '$9.99', '$14.99', ''],
+      ['Sunder', 'Ashline', 40, ['Action', 'Roguelike', 'Co-op'], '$17.49', '$24.99', ''],
+      ['Kestrel', 'Ninth Orbit', 205, ['Flight Sim', 'Sci-fi'], '$34.99', '', ''],
+      ['Marrow', 'Lanternlight', 345, ['Horror', 'Survival'], '$11.99', '$19.99', ''],
+      ['Autumn Line', 'Tinyfolk', 60, ['Trains', 'Management', 'Cozy'], '$12.99', '', ''],
+      ['Null Garden', 'Fernway', 120, ['Puzzle', 'Minimalist'], '$7.99', '', '']
+    ].map(([name, studio, hue, tags, price, old, desc]) => ({
+      name, studio, hue, tags, price, old, desc,
+      cover: grad(hue, 165), wide: grad(hue, 110), hero: heroOf(hue), tagStr: tags.slice(0, 2).join(' · '),
+      disc: old ? `-${Math.round((1 - parseFloat(price.slice(1)) / parseFloat(old.slice(1))) * 100)}%` : ''
+    }));
+    const installedList = L.filter(g => g.installed);
+    return {
+      games, sel, favs: L.filter(g => g.fav), recent: [L[0], L[5], L[1]], installedList,
+      coop: L.filter(g => g.tags.includes('Co-op')),
+      storeGames: S, offers: S.filter(g => g.old), featured: S[0],
+      tilt1: L[0], tilt2: L[2], tilt3: L[1],
+      count: `${L.length} games · ${installedList.length} installed`
+    };
+  }
+}
+</script>
+</body>
+</html>

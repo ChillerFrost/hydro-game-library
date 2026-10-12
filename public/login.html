@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · Hydro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/hydro.css">
+<script>
+  // Already signed in: go straight to the library.
+  try { if (localStorage.getItem('hydro.user') || sessionStorage.getItem('hydro.user')) location.replace('/'); } catch {}
+</script>
+</head>
+<body>
+<div class="auth">
+  <div class="auth-art" aria-hidden="true">
+    <div class="auth-glow"></div>
+    <div class="auth-brand"><div class="logo-mark"></div><div class="auth-brand-name">Hydro</div></div>
+    <div class="auth-pitch">
+      <h1>Every game you own. One library.</h1>
+      <p>Buy, install, and organize your games in one place. Your library and collections sync to every device you sign in on.</p>
+    </div>
+    <div class="tilt t1 cover" data-tilt="0"><div class="cover-name"></div></div>
+    <div class="tilt t2 cover" data-tilt="1"><div class="cover-name"></div></div>
+    <div class="tilt t3 cover" data-tilt="2"><div class="cover-name"></div></div>
+  </div>
+
+  <div class="auth-panel">
+    <form class="auth-form" id="form" novalidate>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab on" role="tab" data-mode="signin">Sign in</button>
+        <button type="button" class="auth-tab" role="tab" data-mode="register">Create account</button>
+      </div>
+
+      <div class="field" data-only="register" hidden>
+        <label class="field-label" for="username">Username</label>
+        <input class="input" id="username" name="username" autocomplete="username" placeholder="ava_k" minlength="3" maxlength="30">
+      </div>
+      <div class="field">
+        <label class="field-label" for="email">Email</label>
+        <input class="input" id="email" name="email" type="email" autocomplete="email" placeholder="ava.k@example.com" required>
+      </div>
+      <div class="field">
+        <div class="field-head">
+          <label class="field-label" for="password">Password</label>
+          <button type="button" class="link" id="forgot" data-only="signin">Forgot?</button>
+        </div>
+        <input class="input" id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••••" required>
+      </div>
+      <label class="check" data-only="signin"><input type="checkbox" id="remember" checked><span class="check-box"></span>Keep me signed in</label>
+
+      <div class="form-error" id="error" role="alert"></div>
+      <div class="form-note" id="note" role="status"></div>
+      <button class="btn-submit" id="submit" type="submit">Sign in</button>
+
+      <div class="divider" data-only="signin">or</div>
+      <button type="button" class="btn-outline" id="code" data-only="signin">Email me a sign-in code</button>
+
+      <div class="auth-switch" data-only="signin">New to Hydro? <button type="button" class="link" data-mode="register">Create an account</button></div>
+      <div class="auth-switch" data-only="register" hidden>Already have an account? <button type="button" class="link" data-mode="signin">Sign in</button></div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/hydro.js"></script>
+<script src="/js/login.js"></script>
+</body>
+</html>
